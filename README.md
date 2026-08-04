@@ -30,7 +30,7 @@ Kiln firings are the production batches; a warped rim is a second.
   [`src/lib/ledger.ts`](src/lib/ledger.ts) is the office: allocation states,
   purchase-order receipts including partials, invoice line maths, the payments
   ledger with a running balance and aging buckets, and the period roll-up. Both
-  are pure, React-free modules. **132 assertions** across
+  are pure modules with no hooks and no store in them. **132 assertions** across
   [`production.test.ts`](src/lib/production.test.ts) and
   [`ledger.test.ts`](src/lib/ledger.test.ts) run against the shipped seed.
 
