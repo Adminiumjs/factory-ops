@@ -1,0 +1,363 @@
+{
+  "manifestVersion": 1,
+  "key": "factory",
+  "name": "Factory Ops",
+  "version": "1.0.0",
+  "publisher": {
+    "id": "adminium",
+    "name": "Adminium",
+    "url": "https://adminium.dev"
+  },
+  "license": "AGPL-3.0-only",
+  "description": {
+    "key": "mft.factory.desc",
+    "fallback": "A works desk for a small manufacturer: production runs on the floor, stock and the order book in the office, and the money as a view over both — backed by your own database."
+  },
+  "categories": ["operations"],
+
+  "compatibility": {
+    "minAdminiumVersion": "1.0.0",
+    "engines": ["postgres", "mysql", "sqlite"],
+    "requires": ["realtime"]
+  },
+
+  "requiredSchema": {
+    "tables": [
+      {
+        "ref": "glazes",
+        "table": "glazes",
+        "label": { "key": "mft.factory.tbl.glazes", "fallback": "Glazes" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "text", "role": "pk" },
+          { "name": "name", "type": "text", "required": true, "display": "title" },
+          { "name": "tint_from", "type": "text", "required": true },
+          { "name": "tint_to", "type": "text", "required": true }
+        ]
+      },
+      {
+        "ref": "stations",
+        "table": "stations",
+        "label": { "key": "mft.factory.tbl.stations", "fallback": "Stations" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "text", "role": "pk" },
+          { "name": "name", "type": "text", "required": true, "display": "title" },
+          { "name": "icon", "type": "text", "required": true },
+          { "name": "operator", "type": "text", "required": true }
+        ]
+      },
+      {
+        "ref": "suppliers",
+        "table": "suppliers",
+        "label": { "key": "mft.factory.tbl.suppliers", "fallback": "Suppliers" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "text", "role": "pk" },
+          { "name": "name", "type": "text", "required": true, "display": "title" },
+          { "name": "contact", "type": "text", "required": true },
+          { "name": "lead_days", "type": "int", "required": true },
+          { "name": "on_time", "type": "decimal", "required": true },
+          { "name": "last_receipt", "type": "date" }
+        ]
+      },
+      {
+        "ref": "customers",
+        "table": "customers",
+        "label": { "key": "mft.factory.tbl.customers", "fallback": "Customers" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "text", "role": "pk" },
+          { "name": "name", "type": "text", "required": true, "display": "title" },
+          { "name": "city", "type": "text", "required": true },
+          {
+            "name": "kind",
+            "type": "enum",
+            "required": true,
+            "values": ["restaurant", "shop", "deli"]
+          }
+        ]
+      },
+      {
+        "ref": "items",
+        "table": "items",
+        "label": { "key": "mft.factory.tbl.items", "fallback": "Stock" },
+        "primaryKey": ["sku"],
+        "columns": [
+          { "name": "sku", "type": "text", "role": "pk" },
+          {
+            "name": "kind",
+            "type": "enum",
+            "required": true,
+            "values": ["component", "product"]
+          },
+          { "name": "name", "type": "text", "required": true, "display": "title" },
+          { "name": "unit", "type": "text", "required": true },
+          { "name": "on_hand", "type": "decimal", "required": true, "default": 0 },
+          { "name": "allocated", "type": "decimal", "required": true, "default": 0 },
+          { "name": "reorder", "type": "decimal", "required": true, "default": 0 },
+          { "name": "cost", "type": "money", "required": true, "default": 0 },
+          { "name": "icon", "type": "text" },
+          { "name": "glaze_id", "type": "fk", "references": "glazes" },
+          { "name": "labour", "type": "money" },
+          { "name": "overhead", "type": "money" },
+          { "name": "price", "type": "money" }
+        ]
+      },
+      {
+        "ref": "bom_lines",
+        "table": "bom_lines",
+        "label": { "key": "mft.factory.tbl.bom_lines", "fallback": "Recipes" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "product_sku", "type": "fk", "references": "items", "required": true },
+          { "name": "component_sku", "type": "fk", "references": "items", "required": true },
+          { "name": "qty_per_unit", "type": "decimal", "required": true },
+          { "name": "position", "type": "int", "default": 0 }
+        ]
+      },
+      {
+        "ref": "runs",
+        "table": "runs",
+        "label": { "key": "mft.factory.tbl.runs", "fallback": "Production runs" },
+        "primaryKey": ["code"],
+        "columns": [
+          { "name": "code", "type": "text", "role": "pk", "display": "title" },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "qty", "type": "decimal", "required": true },
+          { "name": "good", "type": "decimal", "required": true, "default": 0 },
+          { "name": "scrap", "type": "decimal", "required": true, "default": 0 },
+          {
+            "name": "stage",
+            "type": "enum",
+            "required": true,
+            "values": ["queued", "released", "forming", "firing", "finishing", "complete"]
+          },
+          { "name": "station_id", "type": "fk", "references": "stations" },
+          { "name": "started_minutes", "type": "int" },
+          { "name": "lot", "type": "text" },
+          { "name": "signed_forming", "type": "text" },
+          { "name": "signed_firing", "type": "text" },
+          { "name": "signed_finishing", "type": "text" },
+          { "name": "for_order", "type": "text" },
+          { "name": "made_in_session", "type": "boolean", "default": false }
+        ]
+      },
+      {
+        "ref": "firings",
+        "table": "firings",
+        "label": { "key": "mft.factory.tbl.firings", "fallback": "Firings" },
+        "primaryKey": ["code"],
+        "columns": [
+          { "name": "code", "type": "text", "role": "pk", "display": "title" },
+          { "name": "station_id", "type": "fk", "references": "stations", "required": true },
+          { "name": "programme", "type": "text", "required": true },
+          {
+            "name": "status",
+            "type": "enum",
+            "required": true,
+            "values": ["loading", "firing", "cooling", "unloaded"]
+          },
+          { "name": "current_temp", "type": "int", "required": true },
+          { "name": "target_temp", "type": "int", "required": true },
+          { "name": "loaded_minutes", "type": "int", "required": true },
+          { "name": "started_minutes", "type": "int" },
+          { "name": "due_minutes", "type": "int", "required": true },
+          { "name": "elapsed_minutes", "type": "int" },
+          { "name": "shelves", "type": "int", "required": true },
+          { "name": "capacity", "type": "int", "required": true },
+          { "name": "kwh", "type": "decimal" }
+        ]
+      },
+      {
+        "ref": "firing_contents",
+        "table": "firing_contents",
+        "label": { "key": "mft.factory.tbl.firing_contents", "fallback": "Kiln loads" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "firing_code", "type": "fk", "references": "firings", "required": true },
+          { "name": "run_code", "type": "fk", "references": "runs", "required": true },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "qty", "type": "decimal", "required": true }
+        ]
+      },
+      {
+        "ref": "defects",
+        "table": "defects",
+        "label": { "key": "mft.factory.tbl.defects", "fallback": "Seconds" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "at_minutes", "type": "int", "required": true },
+          { "name": "run_code", "type": "fk", "references": "runs", "required": true },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "station_id", "type": "fk", "references": "stations", "required": true },
+          {
+            "name": "reason",
+            "type": "enum",
+            "required": true,
+            "values": ["warp", "crack", "crawl", "pinhole", "chip", "handling"]
+          },
+          { "name": "qty", "type": "decimal", "required": true },
+          { "name": "logged_by", "type": "text", "required": true }
+        ]
+      },
+      {
+        "ref": "movements",
+        "table": "movements",
+        "label": { "key": "mft.factory.tbl.movements", "fallback": "Stock movements" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "moved_on", "type": "date", "required": true },
+          {
+            "name": "kind",
+            "type": "enum",
+            "required": true,
+            "values": ["receipt", "issue", "production", "shipment", "adjustment"]
+          },
+          { "name": "ref", "type": "text", "required": true },
+          { "name": "qty", "type": "decimal", "required": true },
+          { "name": "lot", "type": "text" }
+        ]
+      },
+      {
+        "ref": "purchase_orders",
+        "table": "purchase_orders",
+        "label": { "key": "mft.factory.tbl.purchase_orders", "fallback": "Purchase orders" },
+        "primaryKey": ["code"],
+        "columns": [
+          { "name": "code", "type": "text", "role": "pk", "display": "title" },
+          { "name": "supplier_id", "type": "fk", "references": "suppliers", "required": true },
+          {
+            "name": "status",
+            "type": "enum",
+            "required": true,
+            "values": ["draft", "sent", "part_received", "received"]
+          },
+          { "name": "raised_on", "type": "date", "required": true },
+          { "name": "due_on", "type": "date", "required": true }
+        ]
+      },
+      {
+        "ref": "purchase_order_lines",
+        "table": "purchase_order_lines",
+        "label": {
+          "key": "mft.factory.tbl.purchase_order_lines",
+          "fallback": "Purchase order lines"
+        },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "po_code", "type": "fk", "references": "purchase_orders", "required": true },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "qty", "type": "decimal", "required": true },
+          { "name": "received", "type": "decimal", "required": true, "default": 0 },
+          { "name": "cost", "type": "money", "required": true }
+        ]
+      },
+      {
+        "ref": "sales_orders",
+        "table": "sales_orders",
+        "label": { "key": "mft.factory.tbl.sales_orders", "fallback": "Sales orders" },
+        "primaryKey": ["code"],
+        "columns": [
+          { "name": "code", "type": "text", "role": "pk", "display": "title" },
+          { "name": "customer_id", "type": "fk", "references": "customers", "required": true },
+          {
+            "name": "status",
+            "type": "enum",
+            "required": true,
+            "values": ["draft", "confirmed", "picking", "shipped", "invoiced"]
+          },
+          { "name": "placed_on", "type": "date", "required": true },
+          { "name": "required_by", "type": "date", "required": true }
+        ]
+      },
+      {
+        "ref": "sales_order_lines",
+        "table": "sales_order_lines",
+        "label": { "key": "mft.factory.tbl.sales_order_lines", "fallback": "Sales order lines" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "so_code", "type": "fk", "references": "sales_orders", "required": true },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "qty", "type": "decimal", "required": true },
+          { "name": "alloc", "type": "decimal", "required": true, "default": 0 },
+          { "name": "price", "type": "money", "required": true },
+          { "name": "run_code", "type": "fk", "references": "runs" }
+        ]
+      },
+      {
+        "ref": "invoices",
+        "table": "invoices",
+        "label": { "key": "mft.factory.tbl.invoices", "fallback": "Invoices" },
+        "primaryKey": ["number"],
+        "columns": [
+          { "name": "number", "type": "text", "role": "pk", "display": "title" },
+          { "name": "so_code", "type": "fk", "references": "sales_orders", "required": true },
+          { "name": "customer_id", "type": "fk", "references": "customers", "required": true },
+          { "name": "issued_on", "type": "date", "required": true },
+          { "name": "due_on", "type": "date", "required": true }
+        ]
+      },
+      {
+        "ref": "payments",
+        "table": "payments",
+        "label": { "key": "mft.factory.tbl.payments", "fallback": "Payments" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "invoice_no", "type": "fk", "references": "invoices", "required": true },
+          { "name": "paid_on", "type": "date", "required": true },
+          {
+            "name": "method",
+            "type": "enum",
+            "required": true,
+            "values": ["transfer", "card", "cheque"]
+          },
+          { "name": "amount", "type": "money", "required": true }
+        ]
+      },
+      {
+        "ref": "count_sheets",
+        "table": "count_sheets",
+        "label": { "key": "mft.factory.tbl.count_sheets", "fallback": "Stock counts" },
+        "primaryKey": ["code"],
+        "columns": [
+          { "name": "code", "type": "text", "role": "pk", "display": "title" },
+          { "name": "zone", "type": "text", "required": true },
+          { "name": "walked_by", "type": "text", "required": true },
+          { "name": "opened_on", "type": "date", "required": true },
+          {
+            "name": "status",
+            "type": "enum",
+            "required": true,
+            "values": ["open", "posted"]
+          }
+        ]
+      },
+      {
+        "ref": "count_lines",
+        "table": "count_lines",
+        "label": { "key": "mft.factory.tbl.count_lines", "fallback": "Count lines" },
+        "primaryKey": ["id"],
+        "columns": [
+          { "name": "id", "type": "int", "role": "pk" },
+          { "name": "sheet_code", "type": "fk", "references": "count_sheets", "required": true },
+          { "name": "sku", "type": "fk", "references": "items", "required": true },
+          { "name": "counted", "type": "decimal" }
+        ]
+      }
+    ]
+  },
+
+  "notes": {
+    "derived": "Nothing derived is stored. A run's yield, an item's available quantity, an invoice's status and outstanding amount, and every figure on the money screen are computed from these tables — see src/lib/production.ts and src/lib/ledger.ts. The one deliberate exception is items.allocated, which is a decision somebody made rather than an arithmetic consequence.",
+    "scope": "The money screen is a VIEW over these tables — revenue, cost of goods from the run costings, gross margin, receivables and payables. There is no journal, no chart of accounts, no posting period and no closing entry anywhere in this schema, and none should be added."
+  }
+}
