@@ -155,9 +155,9 @@ desk up by itself, running on the bundled demo shift. No database, no dashboard
 — a fully static preview.
 
 **One command — the whole stack.**
-[`docker-compose.yml`](docker-compose.yml) stands up Postgres (seeded with the
-*same* items, runs, orders, invoices and movements), an auto-generated Adminium
-dashboard that runs that real database, and the desk:
+[`docker-compose.yml`](docker-compose.yml) stands up Postgres (seeded by default
+with the *same* items, runs, orders, invoices and movements), an auto-generated
+Adminium dashboard that runs that real database, and the desk:
 
 ```bash
 cp .env.example .env      # then set ADMINIUM_SECRET — e.g. openssl rand -hex 32
@@ -170,12 +170,13 @@ docker compose up
 - **Works desk** → http://localhost:8080
 - **Adminium dashboard** → http://localhost:4600
 
-On first boot, `works-db` applies [`db/schema.sql`](db/schema.sql) then
-[`db/seed.sql`](db/seed.sql), and Adminium imports the works database
-(`kilnworks`) as its first source connection, introspects the schema, and
-generates the office. Finish the ~1-minute first-run wizard at `:4600` — it's
-pre-pointed at the seeded DB. The install spec Adminium reads to configure
-itself is [`manifest.json`](manifest.json).
+On first boot, `works-db` applies [`db/schema.sql`](db/schema.sql), installs the
+demo bookkeeping, and then loads [`db/seed.sql`](db/seed.sql) unless you set
+`DEMO_DATA=0` — see [Demo data](#demo-data) below. Adminium imports the works
+database (`kilnworks`) as its first source connection, introspects the schema,
+and generates the office. Finish the ~1-minute first-run wizard at `:4600` —
+it's pre-pointed at the DB. The install spec Adminium reads to configure itself
+is [`manifest.json`](manifest.json).
 
 The seed is the app's own shift, not a second fiction: the same Tuesday pinned
 to 28 July 2026, the same 34 items, the same six runs, the same 12 kg shortfall,
@@ -190,6 +191,31 @@ npx esbuild src/data/demo.ts --bundle --format=esm --outfile=/tmp/demo.mjs
 ```
 
 …then run the small emitter documented at the top of `db/seed.sql`.
+
+### Demo data
+
+The works comes up loaded: `docker compose up` puts the Kilnworks shift into
+`kilnworks`, and the desk and the dashboard both open on it. For an empty
+database instead — the same schema, no rows — set `DEMO_DATA=0` in `.env` before
+the first `docker compose up`. Neither choice is permanent.
+
+| Command | What it does |
+| --- | --- |
+| `npm run demo:status` | What is loaded right now, table by table. |
+| `npm run demo:import` | Load `db/seed.sql`. |
+| `npm run demo:wipe` | Remove the demo rows — the schema and your own rows stay. |
+| `npm run demo:reset` | Wipe, then import a fresh copy. |
+
+A wipe takes out only the rows the seed put there: your schema stays, and a demo
+row your data now depends on is kept rather than deleted out from under you and
+reported under `kept`. Your own rows stay with one exception — `ON DELETE
+CASCADE` still applies, so a demo invoice takes its payments with it and a demo
+order takes its lines, including ones you recorded yourself; those are counted
+separately as `cascaded` rather than folded into the total. `wipe` and `reset`
+ask first — `npm run demo:wipe -- --yes` skips the question, which is what you
+need in a script, where there is nobody to ask. [`db/README.md`](db/README.md)
+covers the rest, including how the wipe knows what is demo data and how to
+point the commands at a Postgres outside the compose stack.
 
 ## The split: the floor and the office
 
@@ -250,7 +276,7 @@ src/
   components/  shell, demo dock, four drawers, primitives
   styles/      tokens.css (canonical design tokens), base.css, components.css,
                screens.css
-db/            schema.sql + generated seed.sql for the full self-host stack
+db/            schema.sql, generated seed.sql, demo-data toolkit + README
 public/fonts/  self-hosted Manrope + JetBrains Mono (woff2)
 manifest.json  the Adminium install spec (19 tables)
 ```
