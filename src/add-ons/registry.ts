@@ -4,19 +4,26 @@
  *
  * ── WHAT "THE ONLY PLACE" MEANS, PRECISELY ─────────────────────────────────
  *
- * One line: the `import { register as … } from './vendor/<key>/index.ts'`
- * below. Acceptance criterion 5 is checked by a grep over every shipped source
- * outside `./vendor/`, and it forgives a line SHAPE rather than a file — so a
- * `const carrier = "…";` two lines under the import would fail here, in the one
- * file most likely to hold one.
+ * One line each: the `import { register as … } from './vendor/<key>/index.ts'`
+ * lines below, and the array they feed. Acceptance criterion 5 is checked by a
+ * grep over every shipped source outside `./vendor/`, and it forgives a line
+ * SHAPE rather than a file — so a `const carrier = "…";` two lines under an
+ * import would fail here, in the one file most likely to hold one.
  *
- * Everything else about the add-on arrives inside the object `register()`
+ * Everything else about an add-on arrives inside the object `register()`
  * returns: its name, its monogram, its one-line description, its permissions,
  * its settings and their defaults, its eight-locale strings, its seeded
  * history, and what it says goes and stays when the works disconnects it.
- * Replacing the carrier is replacing one import here and one package over
- * there. Nothing on the Works screen or the Dispatch screen changes, because
- * neither of them knows what it is drawing.
+ * Replacing one is replacing one import here and one package over there.
+ * Nothing on the Works screen, the Dispatch card or the Recipes card changes,
+ * because none of them knows what it is drawing.
+ *
+ * THE SECOND ENTRY IS THE PROOF OF THAT, and it is worth saying because a seam
+ * with one add-on in it has never been asked the question. Registering it
+ * needed this file and the sync script's file list, and nothing else: no screen
+ * learned a name, no i18n module gained a key, and the two surfaces it fills
+ * were already there — one of them mounted in the same diff, for its own
+ * reasons, by a screen that still does not know what fills it.
  *
  * The suites are the deliberate exception and say so: `addOns.test.ts` names
  * the key on purpose, because a suite that asserted the seam without ever
@@ -46,6 +53,7 @@
 
 import { registerAddOnMessages } from "../i18n/messages/index.ts";
 import { register as shippingDhl } from "./vendor/shipping-dhl/index.ts";
+import { register as barcodeLabels } from "./vendor/barcode-labels/index.ts";
 import {
   defaultSettingsFor,
   type AddOn,
@@ -63,7 +71,7 @@ import {
  * imported by `main.tsx` before React mounts, so the merge is complete and its
  * refusals have already fired before the first render reads a bundle.
  */
-const REGISTERED: readonly AddOn[] = [shippingDhl()];
+const REGISTERED: readonly AddOn[] = [shippingDhl(), barcodeLabels()];
 for (const addOn of REGISTERED) {
   if (addOn.messages !== undefined) registerAddOnMessages(addOn.key, addOn.messages);
 }

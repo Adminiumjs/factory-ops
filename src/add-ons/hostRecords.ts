@@ -11,8 +11,20 @@
  * into the add-on is exactly how one shop's vocabulary ends up in twenty
  * add-ons, which is the defect `vendor/host/payloads.ts` was written after.
  *
- * So this file is where `SalesOrder` stops and `OutboundOrder` starts, and it
- * is deliberately the only place in the app that knows both.
+ * So this file is where `SalesOrder` stops and `OutboundOrder` starts — and
+ * where `Item` stops and a `record.actions` payload starts — and it is
+ * deliberately the only place in the app that knows both sides of either.
+ *
+ * ── THE TWO ENDS OF ONE NAMESPACE ARE BOTH IN HERE, ON PURPOSE ────────────
+ *
+ * `catalogueSamples` hands out the key an add-on files things under and
+ * `catalogueRecord` hands over the key it looks them up by. Those are opposite
+ * ends of one seam and they have to agree, and the only way anybody notices
+ * that they do not is by reading both — so they live in one file, next to each
+ * other, rather than one here and one at whichever screen happened to need it.
+ * They did not agree when the second one was written, and nothing anywhere
+ * could have said so, because until then nothing looked a key up at all. See
+ * `catalogueSamples` for the field that moved and why it was the wrong one.
  *
  * ── WHAT THIS APP CANNOT HONESTLY SUPPLY, AND SAYS NOTHING ABOUT ───────────
  *
@@ -35,7 +47,13 @@ import type { PostalAddress, SalesOrder, Item, Now } from "../data/types.ts";
 import { itemName } from "../lib/format.ts";
 import { orderSubtotal } from "../lib/ledger.ts";
 import { itemBySku } from "../lib/production.ts";
-import type { CatalogueSample, OutboundOrder, ShopClock, SlotItem } from "./vendor/host/index.ts";
+import type {
+  CatalogueSample,
+  OutboundOrder,
+  RecordActionsPayload,
+  ShopClock,
+  SlotItem,
+} from "./vendor/host/index.ts";
 
 /**
  * The one currency this works invoices in.
@@ -134,6 +152,93 @@ export function outboundOrder(
 }
 
 /**
+ * ONE `items` ROW AS A RECORD AN ADD-ON MAY ACT ON — the Recipes card's mount.
+ *
+ * ── `entity` IS `item`, AND `piece` WAS THE TEMPTING WRONG ANSWER ──────────
+ *
+ * The contract wants this app's own lower-case word for WHAT KIND OF RECORD it
+ * is, and it is printed small on whatever an add-on draws, so somebody holding
+ * the output knows what the reference refers to. The works' warmest word for a
+ * finished plate is `piece` — `recipes.sub` says "what each piece is built
+ * from" and `catalogueSamples` below says it twice — and it is the wrong answer
+ * here, because it is true of only half of `items`. Clay, glaze and cartons are
+ * rows in the same ledger with the same shape (`data/types.ts` says so and says
+ * why), and the day this mount reaches one of those, `piece` becomes a lie with
+ * nothing anywhere to notice. `item` is what the type is called, what the store
+ * calls the collection, and what the Stock screen heads its first column —
+ * stable, in this app's own vocabulary, and true of every row it could ever be
+ * handed.
+ *
+ * ── `recordId` IS THE SKU, AND IT IS THE SAME KEY `catalogueSamples` HANDS
+ *    OVER — WHICH IS NOT A COINCIDENCE, SEE BELOW ───────────────────────────
+ *
+ * A SKU is this app's identity for a row in every direction: `itemBySku` is how
+ * anything finds one, order lines carry one, movements carry one, a BOM is a
+ * list of them. The contract's own note on the field is that `id`, `ref`,
+ * `number` and `code` are all in use as the identity across the fifteen apps
+ * and an add-on guessing between them is one shop's layout leaking in by the
+ * back door; the works' answer to that question is `sku` and nothing else.
+ *
+ * ── `record` IS THE WHOLE ROW, SPREAD RATHER THAN TRIMMED ──────────────────
+ *
+ * The field is "the record itself, as the host holds it", and this app holds an
+ * `Item`. Handing over a narrowed copy — sku, name, unit, and none of the cost
+ * fields — was considered and refused: it would invent a SECOND idea of what a
+ * works' catalogue row is, one that exists nowhere else in the app and that no
+ * contract describes, and an add-on that legitimately read a field would find
+ * it missing with nothing to say it had been removed. What DOES follow from the
+ * whole row crossing is that the works' unit cost, labour and overhead cross
+ * with it, and that is a real fact about connecting anything to this surface
+ * rather than a detail: it belongs in what an operator agrees to, which is the
+ * permission list the manage drawer already prints per add-on.
+ *
+ * THE SPREAD IS NOT A STYLE CHOICE AND MUST NOT BE "TIDIED" TO `record: item`.
+ * `Item` is an `interface`, and TypeScript gives an implicit index signature to
+ * anonymous object types only — so the interface is not assignable to
+ * `Readonly<Record<string, unknown>>` and the direct form does not compile. The
+ * obvious repair is `item as Record<string, unknown>`, which `payloadCastsGuard`
+ * bans at a mount site for exactly the reason that makes it tempting: it
+ * silences the one contract that keeps an add-on portable. A spread is the
+ * repair that is not a cast.
+ *
+ * ── `patchRecord` IS ABSENT, AND THIS APP CANNOT HONESTLY OFFER ONE ────────
+ *
+ * The handle is optional on this payload because hosts genuinely differ about
+ * whether an add-on may write back. This one differs in the plainest possible
+ * direction: THERE IS NO PATH IN THIS APP THAT WRITES A FIELD OF AN `items`
+ * ROW. Every write to `items` in `state/store.ts` goes through a ledger engine
+ * in `lib/` — a receipt, an output, a shipment, a count — and each of them
+ * moves `onHand` or `allocated` AND WRITES A MOVEMENT BESIDE IT, which is the
+ * works' own rule about its own numbers: a balance that changed with nothing in
+ * the history to say why is the defect the movement ledger exists to prevent.
+ *
+ * So a `patchRecord` here would have to be one of two things, and both are
+ * worse than nothing. A handle that wrote the row directly would let an add-on
+ * put stock on a shelf with no movement behind it. A handle that accepted only
+ * the fields the ledger can move would be a write handle that silently ignores
+ * most of what it is passed, which is the shape of promise this whole seam
+ * refuses. The Recipes screen's own rate box is the same story in miniature: it
+ * edits a DRAFT and offers to put it back, because not even the works edits a
+ * piece's price from here.
+ *
+ * Passing nothing is therefore the honest answer, and it costs nothing to say
+ * so: the contract's rule is that an add-on handed no handle says so on screen
+ * and does the readable half of its job.
+ */
+export function catalogueRecord(item: Item, now: Now): Omit<RecordActionsPayload, "settings"> {
+  return {
+    entity: "item",
+    recordId: item.sku,
+    record: { ...item },
+    // The same adapter the Dispatch card uses, for the same reason: this app
+    // counts a time of day in minutes since midnight and the seam wants an hour
+    // and a minute. A second copy of those two lines is how two mounts come to
+    // disagree about what o'clock it is.
+    now: shopClock(now),
+  };
+}
+
+/**
  * ONE REPRESENTATIVE PIECE PER FAMILY OF WHAT THE WORKS SELLS.
  *
  * `SettingsPanelPayload.samples` is REQUIRED, and its own comment records why
@@ -145,11 +250,45 @@ export function outboundOrder(
  * ── WHAT A FAMILY IS HERE, AND WHY IT IS NOT EVERY SKU ─────────────────────
  *
  * The works sells fourteen finished pieces and they are four shapes in four
- * glazes: a plate is a plate whatever colour it is fired, and a carrier's
- * question — what does a box of these weigh — has one answer per shape rather
- * than one per glaze. Sampling all fourteen would put four copies of the same
- * row in front of the office. The family key is the SKU's shape-and-size
- * prefix, which is how the seed already names them.
+ * glazes: a plate is a plate whatever colour it is fired, and the question this
+ * list was built to answer — what does a box of these weigh — has one answer
+ * per shape rather than one per glaze. Sampling all fourteen would put four
+ * copies of the same row in front of the office. The families are the SKU's
+ * shape-and-size prefix, which is how the seed already names them.
+ *
+ * ── AND THE KEY IS THE REPRESENTATIVE PIECE'S SKU, NOT THAT PREFIX ─────────
+ *
+ * IT USED TO BE THE PREFIX — `PLT-260` — and that was a defect nothing could
+ * see until this app mounted a second surface. `CatalogueSample.key` is not a
+ * grouping label: it is the key AN ADD-ON FILES THINGS UNDER, and the seam's
+ * other end is `RecordActionsPayload.recordId`, which is the key it looks them
+ * up BY when somebody opens a record. Those two are one namespace or the seam
+ * is decorative — and `PLT-260` is not a namespace this app has, because no row
+ * anywhere is called that. Anything filed against it could never be found
+ * again, from any screen, forever, and nothing in either payload lets the far
+ * side notice: it would simply keep reporting that the row has nothing.
+ *
+ * The fix is one field. The sample IS a representative piece — the contract's
+ * own words are "one representative record per family" — so it is keyed by that
+ * piece's own SKU, which is the identity this app uses everywhere else and the
+ * identity `catalogueRecord` hands over above. THE LABEL WAS ALREADY THAT
+ * PIECE'S NAME, which is what makes the old key the odd one out rather than a
+ * deliberate abstraction: the office read "Dinner plate 260 · Speckled" and
+ * filed against a key belonging to nothing.
+ *
+ * WHAT THIS DOES NOT CHANGE, checked before it was done: nothing that reads
+ * these samples reads `key` except an add-on's own storage. The rows, their
+ * labels, their quantities and their prices are byte for byte what they were,
+ * so the shape of the list — one row per family, the whole reason for the
+ * paragraph above — is untouched and no surface in this app looks different.
+ *
+ * WHAT WOULD CHANGE THE GRAIN ITSELF is a screen wanting to reach the other
+ * nine pieces. They are unreachable from a settings form fed this list, by
+ * construction, and that is a limit of the one catalogue view any slot payload
+ * offers rather than something this file can fix — an add-on that cares is
+ * expected to say so on its own surface. Widening to one row per SKU to suit
+ * one add-on's form would be this app deciding a shared mapping on that
+ * add-on's behalf, which is the coupling the whole seam exists to prevent.
  *
  * COMPONENTS ARE NOT SAMPLED. Clay, glaze and cartons are things the works
  * BUYS; nothing on a sales order is ever one, so a parcel of them is not a
@@ -167,8 +306,8 @@ export function catalogueSamples(items: readonly Item[]): CatalogueSample[] {
     const family = item.sku.split("-").slice(0, 2).join("-");
     if (!byFamily.has(family)) byFamily.set(family, item);
   }
-  return [...byFamily.entries()].map(([family, item]) => ({
-    key: family,
+  return [...byFamily.values()].map((item) => ({
+    key: item.sku,
     label: itemName(item),
     quantity: item.unit === "set" ? 24 : 60,
     unitPrice:

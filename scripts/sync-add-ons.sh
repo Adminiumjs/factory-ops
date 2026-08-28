@@ -22,6 +22,7 @@
 #   <somewhere>/add-ons         ← the monorepo
 #       packages/host/              the ONE shared contract
 #       packages/shipping-dhl/
+#       packages/barcode-labels/
 #
 # Override with ADD_ONS_DIR=/path/to/add-ons if yours lives elsewhere. NOTE the
 # changed meaning: it used to name the directory CONTAINING three checkouts, and
@@ -105,7 +106,7 @@ VENDOR="$HOST/src/add-ons/vendor"
 # For an add-on the target name is its manifest key AND the directory name under
 # vendor/, so a reader who sees `vendor/shipping-dhl/` knows exactly which
 # package to go and read.
-TARGETS=(host shipping-dhl)
+TARGETS=(host shipping-dhl barcode-labels)
 
 # The shared contract, vendored ONCE. `testing/` is not here and must not be.
 #
@@ -132,15 +133,35 @@ FILES_shipping_dhl=(
   ui/SettingsPanel.tsx ui/TrackingPanel.tsx
 )
 
+# The second add-on, and the first one here with NO SERVER HALF AT ALL — both
+# symbol tables are compiled into the bundle, there is no credential and no
+# address, so every file it has is a file the browser gets. That is why nothing
+# below is left out for D15 reasons and why the FORBIDDEN sweep finds nothing to
+# refuse: the list is short because the package is inert, not because anything
+# was trimmed.
+#
+# `slots.ts` is absent for the reason at the top of this file — each package's
+# `FILLED_SLOTS` is read only by its own manifest suite, and this app's
+# authoritative list of what it MOUNTS is `src/add-ons/slots.ts`.
+FILES_barcode_labels=(
+  add-on-facts.ts
+  modules.ts code128.ts ean13.ts geometry.ts codes.ts sheet.ts
+  index.ts
+  i18n/strings.ts i18n/t.ts
+  ui/atoms.tsx ui/SettingsPanel.tsx ui/RecordAction.tsx
+)
+
 # Modules that must never be reachable from the browser half (D15), and the
 # server ENTRY POINT this app's one add-on manifest names in `provides[].server`.
 # The carrier's credentials live behind those three files; a client bundle that
 # could reach one is a client bundle that could hold an API key.
 #
-# The list is longer than this host's single add-on needs, and stays that way:
-# it is the fleet's list, a second add-on vendored here would arrive with its
+# The list is longer than either of this host's add-ons needs, and stays that
+# way: it is the fleet's list, the next add-on vendored here may arrive with its
 # own server half, and a FORBIDDEN entry naming a file nothing produces costs
-# nothing while a missing one costs a leak.
+# nothing while a missing one costs a leak. The second add-on vendored here has
+# no server half at all and the sweep therefore finds nothing in it, which is
+# the sweep working rather than the sweep being unnecessary.
 FORBIDDEN=(carrier.ts http.ts server.ts server/artwork-source.ts)
 
 # Files the OLD three-repo layout vendored and this one does not: each add-on's

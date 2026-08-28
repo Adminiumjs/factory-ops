@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 
 import { AddOnSlot } from "../add-ons/AddOnSlot.tsx";
-import { outboundOrder, shopClock } from "../add-ons/hostRecords.ts";
+import { catalogueRecord, outboundOrder, shopClock } from "../add-ons/hostRecords.ts";
 import type { Invoice, PostalAddress, SalesOrder } from "../data/types.ts";
 import { useI18n } from "../i18n/index.tsx";
 import {
@@ -1297,6 +1297,7 @@ export function Recipes() {
   const sos = useStore((s) => s.sos);
   const recipeSku = useStore((s) => s.recipeSku);
   const rateDraft = useStore((s) => s.rateDraft);
+  const now = useStore((s) => s.now);
   const setRecipeSku = useStore((s) => s.setRecipeSku);
   const setRateDraft = useStore((s) => s.setRateDraft);
 
@@ -1488,6 +1489,43 @@ export function Recipes() {
               ))}
             </Panel>
           )}
+
+          {/*
+            ONE SLOT — `record.actions`, at the foot of the card for the piece
+            this screen is about. Four things are worth reading before it moves.
+
+            THE RECORD IS THE PIECE, AND THIS IS THE SCREEN WHERE SOMEBODY IS
+            LOOKING AT ONE. That is the whole test for this slot, and the
+            Recipes card passes it in a way no other screen here does: Stock is
+            a list, the Orders book is a list of orders, and the movement
+            drawer is one item's HISTORY rather than the item. A person is on
+            this card because this piece is what they are dealing with.
+
+            UNCONDITIONAL, unlike the Dispatch mount. That one is withheld from
+            a collection order because `deliverTo === null` is a decision the
+            works has already made about that order; there is no equivalent
+            here. Every row this screen can show is a finished piece the works
+            sells, so there is no state of the record that makes an action on
+            it meaningless, and a condition invented to look careful would just
+            be a mount that sometimes is not one.
+
+            SILENT WHEN NOTHING FILLS IT — no `fallback` prop, matching
+            `SLOT_EMPTY_BEHAVIOUR`. This app draws no heading above it, so with
+            nothing connected the card simply ends where it always ended (24
+            D6). A dashed box under the rate panel would be the works
+            announcing a hole in a screen that was finished before any add-on
+            existed.
+
+            THE WHOLE PAYLOAD IS BUILT IN `hostRecords.ts` AND NONE OF IT HERE.
+            What this app calls the record, how it identifies one, what it hands
+            over and whether it offers a write handle are four decisions about
+            the SEAM rather than about this screen — including the absent
+            `patchRecord`, which has a long reason and would have been a
+            one-word answer if it were decided at a mount site. Keeping the
+            object literal here would also put a second copy of the clock
+            adapter on this screen.
+           */}
+          <AddOnSlot slot="record.actions" payload={catalogueRecord(product, now)} />
         </div>
       </div>
     </section>
