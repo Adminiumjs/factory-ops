@@ -153,7 +153,7 @@ const EN = {
   "chrome.toast.payment": "{amount} recorded against {number}",
   "chrome.toast.countPosted": "{code} posted · {count} line adjusted|{code} posted · {count} lines adjusted",
   "chrome.toast.poDrafted": "{code} drafted for {supplier} · {count} line|{code} drafted for {supplier} · {count} lines",
-  "chrome.toast.signed": "Handover signed off by {name}",
+  "chrome.toast.signed": "Handover signed off in the demo · no signature is captured",
   "chrome.toast.reset": "The demo is back to how it started",
 };
 
@@ -281,7 +281,8 @@ const DE: Bundle = {
     "{code} gebucht · {count} Position korrigiert|{code} gebucht · {count} Positionen korrigiert",
   "chrome.toast.poDrafted":
     "{code} für {supplier} entworfen · {count} Position|{code} für {supplier} entworfen · {count} Positionen",
-  "chrome.toast.signed": "Übergabe von {name} abgezeichnet",
+  "chrome.toast.signed":
+    "Übergabe in der Demo abgezeichnet · es wird keine Unterschrift erfasst",
   "chrome.toast.reset": "Die Demo ist wieder im Ausgangszustand",
 };
 
@@ -408,7 +409,8 @@ const FR: Bundle = {
     "{code} comptabilisé · {count} ligne ajustée|{code} comptabilisé · {count} lignes ajustées",
   "chrome.toast.poDrafted":
     "{code} rédigée pour {supplier} · {count} ligne|{code} rédigée pour {supplier} · {count} lignes",
-  "chrome.toast.signed": "Passation signée par {name}",
+  "chrome.toast.signed":
+    "Passation signée dans la démonstration · aucune signature n’est enregistrée",
   "chrome.toast.reset": "La démonstration est revenue à son état initial",
 };
 
@@ -535,7 +537,7 @@ const CS: Bundle = {
     "{code} zaúčtována · upravena {count} položka|{code} zaúčtována · upraveny {count} položky|{code} zaúčtována · upraveno {count} položek",
   "chrome.toast.poDrafted":
     "{code} připravena pro {supplier} · {count} položka|{code} připravena pro {supplier} · {count} položky|{code} připravena pro {supplier} · {count} položek",
-  "chrome.toast.signed": "Předávku odsouhlasil(a) {name}",
+  "chrome.toast.signed": "Předávka odsouhlasena v ukázce · žádný podpis se neukládá",
   "chrome.toast.reset": "Ukázka je zpět ve výchozím stavu",
 };
 
@@ -661,7 +663,7 @@ const DA: Bundle = {
     "{code} bogført · {count} linje reguleret|{code} bogført · {count} linjer reguleret",
   "chrome.toast.poDrafted":
     "{code} oprettet til {supplier} · {count} linje|{code} oprettet til {supplier} · {count} linjer",
-  "chrome.toast.signed": "Overlevering godkendt af {name}",
+  "chrome.toast.signed": "Overlevering godkendt i demoen · ingen underskrift gemmes",
   "chrome.toast.reset": "Demoen er tilbage ved udgangspunktet",
 };
 
@@ -782,7 +784,7 @@ const ZH_CN: Bundle = {
   "chrome.toast.payment": "已在 {number} 上登记 {amount}",
   "chrome.toast.countPosted": "{code} 已过账 · 调整了 {count} 行",
   "chrome.toast.poDrafted": "已为 {supplier} 起草 {code} · 共 {count} 行",
-  "chrome.toast.signed": "交班已由 {name} 签核",
+  "chrome.toast.signed": "交班已在演示中签核 · 不会保存任何签名",
   "chrome.toast.reset": "演示已恢复到初始状态",
 };
 
@@ -903,7 +905,7 @@ const ZH_TW: Bundle = {
   "chrome.toast.payment": "已在 {number} 上登錄 {amount}",
   "chrome.toast.countPosted": "{code} 已過帳 · 調整了 {count} 筆",
   "chrome.toast.poDrafted": "已為 {supplier} 草擬 {code} · 共 {count} 筆",
-  "chrome.toast.signed": "交接已由 {name} 簽核",
+  "chrome.toast.signed": "交接已在示範中簽核 · 不會保存任何簽名",
   "chrome.toast.reset": "示範已回到起始狀態",
 };
 
@@ -1031,7 +1033,7 @@ const AR: Bundle = {
     "رُحّلت {code} · عُدّل {count} بند|رُحّلت {code} · عُدّل بند واحد|رُحّلت {code} · عُدّل بندان|رُحّلت {code} · عُدّلت {count} بنود|رُحّلت {code} · عُدّل {count} بندًا|رُحّلت {code} · عُدّل {count} بند",
   "chrome.toast.poDrafted":
     "أُعدّت {code} لـ {supplier} · {count} بند|أُعدّت {code} لـ {supplier} · بند واحد|أُعدّت {code} لـ {supplier} · بندان|أُعدّت {code} لـ {supplier} · {count} بنود|أُعدّت {code} لـ {supplier} · {count} بندًا|أُعدّت {code} لـ {supplier} · {count} بند",
-  "chrome.toast.signed": "اعتمد {name} التسليم",
+  "chrome.toast.signed": "اعتُمد التسليم في العرض · لا يُحفظ أي توقيع",
   "chrome.toast.reset": "عاد العرض إلى حالته الأولى",
 };
 

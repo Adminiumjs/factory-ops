@@ -763,10 +763,16 @@ export const useStore = create<State>((set, get) => ({
 
   setHandoverNote: (handoverNote) => set({ handoverNote }),
 
+  /*
+   * Nothing is signed. The flag flips in memory and the panel stops offering
+   * the button — no signature is captured, and none is filed anywhere, so the
+   * toast says so and names nobody (24 D11). Attributing the signature to the
+   * floor lead was the strongest untrue claim in this app.
+   */
   signHandover: () => {
     if (get().handoverSigned) return;
     set({ handoverSigned: true });
-    get().toast(t("chrome.toast.signed", { name: STAFF.floor.name }), "check");
+    get().toast(t("chrome.toast.signed"), "check");
   },
 
   /* ------------------------------------------------------------- toasts */
