@@ -1,3 +1,4 @@
+import { Segmented } from "./Primitives.tsx";
 /**
  * Internal-tool chrome throughout — this app has no public face, so unlike the
  * clinic desk and the hotel there is ONE shell rather than two. What the demo
@@ -272,6 +273,44 @@ function GlobalSearch() {
 
 /* ----------------------------------------------------------------- shell */
 
+/**
+ * WHICH SIDE OF THE BUSINESS YOU ARE LOOKING AT.
+ *
+ * Both personas here are STAFF. Until this existed the only way to move between
+ * them was the demo dock's segment — so outside a demo build the app had no
+ * switcher at all, and half of it was unreachable. That was invisible while the
+ * dock shipped in every build; making the dock demo-only is what exposed it.
+ *
+ * It is a LENS, not a permission. A hosted surface sits behind the operator's
+ * session and RBAC, so everyone who can reach this page is already authorised
+ * for the data underneath; flipping the view changes what is shown, never what
+ * may be fetched. Anything that must actually be withheld belongs in a role,
+ * not in a segmented control.
+ *
+ * The `chrome.dock.*` keys are reused deliberately: they carry the right words
+ * in all eight locales, and renaming them would be 8 × 3 repos of churn for an
+ * internal identifier no reader ever sees.
+ */
+function PersonaSwitch() {
+  const { t } = useI18n();
+  const persona = useStore((s) => s.persona);
+  const setPersona = useStore((s) => s.setPersona);
+  return (
+    <div className="kw-sidebar__persona">
+      <Segmented<Persona>
+        full
+        ariaLabel={t("chrome.dock.persona")}
+        value={persona}
+        onChange={setPersona}
+        options={[
+          { value: "floor", label: t("chrome.dock.floor") },
+          { value: "office", label: t("chrome.dock.office") },
+        ]}
+      />
+    </div>
+  );
+}
+
 export default function Shell({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const navOpen = useStore((s) => s.navOpen);
@@ -283,9 +322,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <div className="kw-app">
       <aside className="kw-sidebar">
         <Brand />
-        <div className="kw-sidebar__persona">
-          {t(persona === "floor" ? "chrome.dock.floor" : "chrome.dock.office")}
-        </div>
+        <PersonaSwitch />
         <NavList />
         <Footer />
       </aside>
