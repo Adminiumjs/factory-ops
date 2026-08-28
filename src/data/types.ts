@@ -42,6 +42,8 @@ export type View =
   | "invoices"
   | "recipes"
   | "books"
+  /* The works' own record: where it is, and what it is connected to. */
+  | "works"
   | "notfound";
 
 /** Where each persona lands when the dock switches to it. */
@@ -299,6 +301,55 @@ export interface SoLine {
   run: string | null;
 }
 
+/**
+ * SOMEWHERE A PALLET CAN GO.
+ *
+ * ── WHY THIS HANGS OFF AN ORDER AND NOT OFF A CUSTOMER ─────────────────────
+ *
+ * `Customer` carries a `city` and nothing else, which was enough while the desk
+ * only ever grouped orders by who placed them. It is not enough to hand a
+ * pallet to a driver: that needs a door, and one customer does not have one
+ * door. Harbour & Vine send most of their tableware to the Falmouth restaurant
+ * and SO-5109 to the second site in Truro; a shop's goods go to a warehouse
+ * while its post goes to the shop. Hanging the address off the customer would
+ * make the second case unrepresentable and the first quietly wrong, so it hangs
+ * off the thing that actually travels.
+ *
+ * ── THE SHAPE IS BORROWED ON PURPOSE ───────────────────────────────────────
+ *
+ * These five fields, with these names and these meanings, are what Adminium's
+ * add-on host seam already calls a `PostalAddress` — the shape its dispatch and
+ * checkout payloads carry, and the one a carrier reads. Nothing of that seam is
+ * installed here and this app does not depend on it; the SHAPE is copied rather
+ * than invented so that anything which later reads a works' orders across it is
+ * a pass-through instead of a translation layer somebody has to keep correct.
+ * If the seam's shape moves, this one follows it — it does not get a private
+ * opinion about what an address is.
+ *
+ * The one deliberate difference is that `lines` is mutable here and readonly
+ * there. Every record in this file is copied on its way out of `data/source.ts`
+ * and mutated by the store afterwards, and a readonly array in the middle of
+ * that would be the odd one out. It is still assignable to the seam's readonly
+ * field, so the borrowing survives.
+ *
+ * `country` IS A CODE — `GB`, never "United Kingdom" — for the reason the seam
+ * gives: it is the one field in here a machine reads, because a carrier checks
+ * a postcode against a country. Everything else is text for a label.
+ */
+export interface PostalAddress {
+  /**
+   * Who the pallet is addressed to. Not always the customer's own name: a
+   * second site, a warehouse, a kitchen door round the back of the restaurant.
+   */
+  name: string;
+  /** Street lines, in the order they are written on the label. */
+  lines: string[];
+  city: string;
+  postcode: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
+}
+
 export interface SalesOrder {
   code: string;
   customer: string;
@@ -307,6 +358,40 @@ export interface SalesOrder {
   requiredBy: string;
   lines: SoLine[];
   invoice: string | null;
+  /**
+   * WHERE THE GOODS GO — or `null`, which MEANS THE CUSTOMER COLLECTS.
+   *
+   * ── NULL IS AN ANSWER HERE, NOT A BLANK ─────────────────────────────────
+   *
+   * A works does both. Most orders go on a pallet to a door; some the customer
+   * fetches, and for those the office wants no address because there is nothing
+   * to address. So the field is nullable — and the whole weight of the decision
+   * sits on what the null MEANS. It means COLLECTION: somebody was asked and
+   * the answer was "they take it". It does NOT mean "nobody has typed it yet".
+   *
+   * That distinction is the difference between a state and a hole, and it is
+   * only real because three other places honour it:
+   *
+   *  - `db/schema.sql` refuses a half-filled address — either all five parts
+   *    are present or none are — so a null cannot be somebody who stopped
+   *    halfway through the form;
+   *  - the Dispatch screen renders the null AS COLLECTION, in words, in the
+   *    place the address would have occupied, rather than leaving a gap;
+   *  - the seed exercises it. SO-5108 is a collection, so the state is on a
+   *    screen in the running demo instead of only in this comment.
+   *
+   * `| null` rather than `?`, because `?` already means something else in this
+   * file: `Item.glaze` is optional because a bag of clay HAS no glaze. Every
+   * sales order has a route, and this one's route is that they collect.
+   *
+   * WHAT WOULD CHANGE THIS. A draft-order intake, where an order can honestly
+   * exist before anybody has been asked where it goes. Then the null carries
+   * two meanings, one of them a hole, and the field has to become a two-state
+   * value — a mode beside an optional address — with the schema's constraint
+   * rewritten to match. Adding that mode before such a screen exists would be a
+   * column nobody could be wrong about, which is a different kind of lie.
+   */
+  deliverTo: PostalAddress | null;
 }
 
 export type PayMethod = "transfer" | "card" | "cheque";

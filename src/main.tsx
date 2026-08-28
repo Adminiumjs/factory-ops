@@ -50,6 +50,24 @@ async function boot(): Promise<void> {
     }
   }
 
+  /*
+   * REGISTER THE ADD-ONS BEFORE THE FIRST RENDER, and after the same dynamic
+   * boundary the store is behind.
+   *
+   * Both halves matter. `demoAddOns()` merges each add-on's eight-locale bundle
+   * into the host's at module load and THROWS if one is short a locale, so it
+   * has to happen where a boot failure is a boot failure rather than a blank
+   * screen inside a component. And it has to be a dynamic import for the reason
+   * `App`'s is: this module reaches the store, which reads `DataSource` at
+   * module scope, and a static import here would evaluate that before the
+   * `await` above could swap a connected source in.
+   */
+  const [{ demoAddOns }, { useStore }] = await Promise.all([
+    import("./add-ons/registry.ts"),
+    import("./state/store.ts"),
+  ]);
+  useStore.getState().registerAddOns(demoAddOns());
+
   const { default: App } = await import("./app/App.tsx");
   createRoot(container as HTMLElement).render(
     <StrictMode>

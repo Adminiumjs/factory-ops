@@ -38,6 +38,13 @@
  *     list somebody maintains — but it means a brand-new supplier appears to
  *     supply nothing until their first order.
  *
+ * A THIRD THING THE SCHEMA CANNOT SAY is not a missing table and so is not on
+ * that list: `manifest.json` has no way to express a CHECK, so the constraint
+ * that makes a sales order's empty delivery address mean "the customer
+ * collects" — all five parts or none — holds in `db/schema.sql` and cannot
+ * cross the wire. `addressOf` below is where that is handled, and why it
+ * refuses to read a half-filled row as a collection.
+ *
  * ── TIME COMES FROM THE SCOPE, NOT FROM THE BROWSER ────────────────────────
  * `toTenantDay`/`toTenantMinutes` against the timezone the scope publishes.
  * `new Date().getHours()` would read the VISITOR's clock and put the shift
@@ -70,6 +77,7 @@ import type {
   Payment,
   PoLine,
   PoStatus,
+  PostalAddress,
   PurchaseOrder,
   Run,
   SalesOrder,
@@ -84,6 +92,10 @@ import type { DataSource } from "./source.ts";
 
 /* --------------------------------------------------------------- the wire */
 
+interface WireWorks {
+  id: string; name: string; line1: string; line2: string | null;
+  city: string; postcode: string; country: string;
+}
 interface WireGlaze { id: string; name: string; tint_from: string; tint_to: string }
 interface WireStation { id: string; name: string; icon: string; operator: string }
 interface WireSupplier {
@@ -121,7 +133,11 @@ interface WireMovement {
 }
 interface WirePo { code: string; supplier_id: string; status: PoStatus; raised_on: string; due_on: string }
 interface WirePoLine { po_code: string; sku: string; qty: string; received: string; cost: string }
-interface WireSo { code: string; customer_id: string; status: SoStatus; placed_on: string; required_by: string }
+interface WireSo {
+  code: string; customer_id: string; status: SoStatus; placed_on: string; required_by: string;
+  deliver_to_name: string | null; deliver_to_line1: string | null; deliver_to_line2: string | null;
+  deliver_to_city: string | null; deliver_to_postcode: string | null; deliver_to_country: string | null;
+}
 interface WireSoLine { so_code: string; sku: string; qty: string; alloc: string; price: string; run_code: string | null }
 interface WireInvoice { number: string; so_code: string; customer_id: string; issued_on: string; due_on: string }
 interface WirePayment { invoice_no: string; paid_on: string; method: PayMethod; amount: string }
@@ -160,6 +176,7 @@ const SHIFT = { shiftStart: 7 * 60, shiftEnd: 15 * 60 + 30 } as const;
 
 /** The columns the scope must expose, checked at boot. */
 const REQUIRED = {
+  works: ["id", "name", "line1", "line2", "city", "postcode", "country"],
   glazes: ["id", "name", "tint_from", "tint_to"],
   stations: ["id", "name", "icon", "operator"],
   suppliers: ["id", "name", "contact", "lead_days", "on_time", "last_receipt"],
@@ -173,7 +190,7 @@ const REQUIRED = {
   movements: ["sku", "moved_on", "kind", "ref", "qty", "lot"],
   purchaseOrders: ["code", "supplier_id", "status", "raised_on", "due_on"],
   purchaseOrderLines: ["po_code", "sku", "qty", "received", "cost"],
-  salesOrders: ["code", "customer_id", "status", "placed_on", "required_by"],
+  salesOrders: ["code", "customer_id", "status", "placed_on", "required_by", "deliver_to_name", "deliver_to_line1", "deliver_to_line2", "deliver_to_city", "deliver_to_postcode", "deliver_to_country"],
   salesOrderLines: ["so_code", "sku", "qty", "alloc", "price", "run_code"],
   invoices: ["number", "so_code", "customer_id", "issued_on", "due_on"],
   payments: ["invoice_no", "paid_on", "method", "amount"],
@@ -183,6 +200,7 @@ const REQUIRED = {
 
 export interface Snapshot {
   now: Now;
+  works: PostalAddress;
   glazes: Glaze[];
   items: Item[];
   stations: Station[];
@@ -222,6 +240,74 @@ function groupBy<T, K extends string>(rows: T[], key: (row: T) => K): Map<K, T[]
 }
 
 const num = (value: string | null): number => Number(value ?? 0);
+
+/**
+ * The six delivery columns, back into one address or into a collection.
+ *
+ * ── WHY A HALF-FILLED ROW IS NOT A COLLECTION ──────────────────────────────
+ *
+ * `db/schema.sql` refuses a partial address: either the five parts a label
+ * needs are all there or none of them are, which is what makes the empty case
+ * mean "the customer collects" rather than "somebody stopped typing". THAT
+ * CHECK CANNOT CROSS THE WIRE. A connected tenant's table is created from
+ * `manifest.json`, whose column vocabulary has nowhere to put a constraint, so
+ * a scope really can hand this function four fields out of five.
+ *
+ * Reading that as a collection would be the worst available answer: an order
+ * with somebody's town and postcode in it would quietly become one nobody is
+ * delivering, and no screen would ever say why. So the collection is the case
+ * where ALL of them are empty, and anything else builds an address with the
+ * gaps left visible — a blank line on the Dispatch card is an office job
+ * somebody can see and fix, which a silently reclassified order is not.
+ *
+ * The same reasoning as the two WS-I gaps this file carries: degrade where it
+ * shows, and pin the degradation in a test so it stays a decision.
+ */
+/**
+ * The works' own row, or nothing — in which case the whole connected read is
+ * abandoned and the app falls back to demo mode.
+ *
+ * `null` rather than a blank address, and the difference matters more here than
+ * anywhere else in this file: every other degradation in it leaves a gap a
+ * reader can see and fix from the dashboard, and an empty ORIGIN is not that
+ * kind of gap. It is the collection point on every label the works will ever
+ * print. A blank one would put a pallet on a van addressed from nowhere, and
+ * nothing downstream could tell that apart from an address that is genuinely
+ * short a line.
+ */
+function worksOf(rows: WireWorks[]): PostalAddress | null {
+  const row = rows[0];
+  if (row === undefined) return null;
+  return {
+    name: row.name,
+    // `line2` is optional the same way a delivery address's is: an absent one
+    // is dropped, not carried as an empty line onto a label.
+    lines: [row.line1, row.line2 ?? ""].filter((line) => line !== ""),
+    city: row.city,
+    postcode: row.postcode,
+    country: row.country,
+  };
+}
+
+function addressOf(so: WireSo): PostalAddress | null {
+  const parts = [
+    so.deliver_to_name,
+    so.deliver_to_line1,
+    so.deliver_to_city,
+    so.deliver_to_postcode,
+    so.deliver_to_country,
+  ];
+  if (parts.every((p) => (p ?? "") === "")) return null;
+  return {
+    name: so.deliver_to_name ?? "",
+    // `line2` is genuinely optional — a one-line address is ordinary — so an
+    // absent one is dropped rather than carried as an empty line on the label.
+    lines: [so.deliver_to_line1 ?? "", so.deliver_to_line2 ?? ""].filter((l) => l !== ""),
+    city: so.deliver_to_city ?? "",
+    postcode: so.deliver_to_postcode ?? "",
+    country: so.deliver_to_country ?? "",
+  };
+}
 
 /**
  * Read a whole ref, a page at a time.
@@ -267,10 +353,11 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
     const cap = (ref: string): number => config.refs[ref]?.limit ?? 100;
 
     const [
-      glazes, stations, suppliers, customers, items, bomLines, runs, firings,
+      works, glazes, stations, suppliers, customers, items, bomLines, runs, firings,
       firingContents, defects, movements, pos, poLines, sos, soLines, invoices,
       payments, countSheets, countLines,
     ] = await Promise.all([
+      listAll<WireWorks>(client, "works", cap("works"), 50_000),
       listAll<WireGlaze>(client, "glazes", cap("glazes"), 50_000),
       listAll<WireStation>(client, "stations", cap("stations"), 50_000),
       listAll<WireSupplier>(client, "suppliers", cap("suppliers"), 50_000),
@@ -311,6 +398,31 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
       suppliesBySupplier.set(supplier, set);
     }
 
+    /*
+     * ONE ROW, and this is where the schema's `id = 'works'` check stops being
+     * enforceable. `manifest.json` cannot express a CHECK — the same gap
+     * `addressOf` above is written against — so a connected scope can hand back
+     * none of these rows or five. Taking the first is the only reading that is
+     * not an invention.
+     *
+     * AN EMPTY TABLE ABANDONS THE WHOLE READ, which is stronger than anything
+     * else in this file does, and the reason is `addressOf`'s reason turned
+     * around. There the empty case MEANS something — the customer collects —
+     * and a partial one does not, so the partial one degrades where it shows.
+     * Here neither means anything: a works with no address is not a works that
+     * does something different, it is one nobody has finished setting up. Every
+     * other gap in this file leaves a blank line on a card somebody can fix;
+     * this one would put a pallet on a van addressed from nowhere.
+     */
+    const worksAddress = worksOf(works);
+    if (worksAddress === null) {
+      console.warn(
+        "[adminium] the works table is empty — nothing says where goods leave from, " +
+          "so the demo seed is used instead. Add the row in Studio → Records.",
+      );
+      return null;
+    }
+
     const nowIso = new Date().toISOString();
     return {
       now: {
@@ -318,6 +430,7 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
         minutes: toTenantMinutes(nowIso, timezone),
         ...SHIFT,
       },
+      works: worksAddress,
       glazes: glazes.map((g) => ({
         id: g.id,
         nameKey: `data.glaze.${g.id}`,
@@ -458,6 +571,7 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
         ),
         // The invoice points at the order, so the back-reference is derived.
         invoice: invoices.find((inv) => inv.so_code === so.code)?.number ?? null,
+        deliverTo: addressOf(so),
       })),
       invoices: invoices.map((inv) => ({
         number: inv.number,
@@ -491,6 +605,7 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
 export function snapshotSource(snap: Snapshot): DataSource {
   return {
     now: () => ({ ...snap.now }),
+    works: () => ({ ...snap.works, lines: [...snap.works.lines] }),
     glazes: () => snap.glazes.map((g) => ({ ...g })),
     items: () =>
       snap.items.map((i) => ({
@@ -512,7 +627,14 @@ export function snapshotSource(snap: Snapshot): DataSource {
     purchaseOrders: () =>
       snap.purchaseOrders.map((po) => ({ ...po, lines: po.lines.map((l) => ({ ...l })) })),
     salesOrders: () =>
-      snap.salesOrders.map((so) => ({ ...so, lines: so.lines.map((l) => ({ ...l })) })),
+      snap.salesOrders.map((so) => ({
+        ...so,
+        lines: so.lines.map((l) => ({ ...l })),
+        // Copied to the same depth `demoSource` copies it to: the address is an
+        // object holding an array, and a shallow spread would share both.
+        deliverTo:
+          so.deliverTo === null ? null : { ...so.deliverTo, lines: [...so.deliverTo.lines] },
+      })),
     invoices: () =>
       snap.invoices.map((inv) => ({ ...inv, payments: inv.payments.map((p) => ({ ...p })) })),
     countSheets: () =>

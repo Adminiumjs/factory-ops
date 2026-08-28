@@ -52,8 +52,15 @@ const MIRRORED: readonly (readonly [string, () => number])[] = [
  * Tables the SQL seeds and the app has no collection for. Listed rather than
  * omitted: an unexplained absence is indistinguishable from an oversight, and
  * this is the line where somebody notices the app grew a reader for one.
+ *
+ * `works` is the one entry here that IS read by the app — `DataSource.works()`
+ * — and it is still on this side, because what this file compares is ROW
+ * COUNTS and that read returns one record rather than a collection. Counting it
+ * would mean writing `1` on the TypeScript side, which is not a mirror of
+ * anything: it would pass whatever the seed said. The schema states the real
+ * constraint, `CHECK (id = 'works')`, in the one place that can enforce it.
  */
-const SQL_ONLY: readonly string[] = ["bom_lines", "count_lines", "firing_contents", "payments", "purchase_order_lines", "sales_order_lines"];
+const SQL_ONLY: readonly string[] = ["bom_lines", "count_lines", "firing_contents", "payments", "purchase_order_lines", "sales_order_lines", "works"];
 
 /**
  * Tables seeded by an `INSERT … SELECT`, whose row count is not in the text.

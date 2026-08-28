@@ -215,6 +215,9 @@ const EN = {
   "dispatch.sub":
     "Pick the lines off the shelf, then record the shipment — stock is issued and the order moves to Shipped.",
   "dispatch.picked": "{picked} of {total} picked",
+  "dispatch.deliverTo": "Deliver to",
+  "dispatch.collection": "Collection",
+  "dispatch.collectNote": "{customer} takes this from the works. Nothing to send.",
   "dispatch.cartons": "{count} carton|{count} cartons",
   "dispatch.wrapped": "{count} wrapped",
   "dispatch.onHand": "{qty} on hand",
@@ -543,6 +546,9 @@ const DE: Bundle = {
   "dispatch.sub":
     "Positionen vom Regal holen, dann den Warenausgang buchen — der Bestand wird entnommen und der Auftrag geht auf Versandt.",
   "dispatch.picked": "{picked} von {total} gepickt",
+  "dispatch.deliverTo": "Lieferadresse",
+  "dispatch.collection": "Abholung",
+  "dispatch.collectNote": "{customer} holt die Ware selbst ab. Nichts zu versenden.",
   "dispatch.cartons": "{count} Karton|{count} Kartons",
   "dispatch.wrapped": "{count} eingepackt",
   "dispatch.onHand": "{qty} auf Lager",
@@ -863,6 +869,10 @@ const FR: Bundle = {
   "dispatch.sub":
     "Prélever les lignes en rayon, puis enregistrer l’expédition — le stock sort et la commande passe en Expédiée.",
   "dispatch.picked": "{picked} sur {total} prélevées",
+  "dispatch.deliverTo": "Livrer à",
+  "dispatch.collection": "Enlèvement",
+  "dispatch.collectNote":
+    "{customer} vient chercher la marchandise à l’atelier. Rien à expédier.",
   "dispatch.cartons": "{count} carton|{count} cartons",
   "dispatch.wrapped": "{count} emballés",
   "dispatch.onHand": "{qty} en stock",
@@ -1183,6 +1193,9 @@ const CS: Bundle = {
   "dispatch.sub":
     "Vychystat položky z regálu a zapsat expedici — sklad se vydá a objednávka přejde na Odesláno.",
   "dispatch.picked": "{picked} z {total} vychystáno",
+  "dispatch.deliverTo": "Doručit na",
+  "dispatch.collection": "Osobní odběr",
+  "dispatch.collectNote": "{customer} si zboží vyzvedne v dílně. Není co odesílat.",
   "dispatch.cartons": "{count} karton|{count} kartony|{count} kartonů",
   "dispatch.wrapped": "{count} zabaleno",
   "dispatch.onHand": "{qty} na skladě",
@@ -1501,6 +1514,9 @@ const DA: Bundle = {
   "dispatch.sub":
     "Pluk linjerne fra hylden, og bogfør så forsendelsen — lageret udtages, og ordren går til Afsendt.",
   "dispatch.picked": "{picked} af {total} plukket",
+  "dispatch.deliverTo": "Leveres til",
+  "dispatch.collection": "Afhentning",
+  "dispatch.collectNote": "{customer} henter selv varerne på værkstedet. Intet at sende.",
   "dispatch.cartons": "{count} kasse|{count} kasser",
   "dispatch.wrapped": "{count} pakket ind",
   "dispatch.onHand": "{qty} på lager",
@@ -1815,6 +1831,9 @@ const ZH_CN: Bundle = {
   "dispatch.title": "发货",
   "dispatch.sub": "把各行从货架上拣出来，然后记录发货 —— 库存领出，订单转为已发货。",
   "dispatch.picked": "{total} 行中已拣 {picked} 行",
+  "dispatch.deliverTo": "送货至",
+  "dispatch.collection": "自提",
+  "dispatch.collectNote": "{customer} 自行到车间取货，无需发运。",
   "dispatch.cartons": "{count} 箱",
   "dispatch.wrapped": "{count} 件已包装",
   "dispatch.onHand": "在库 {qty}",
@@ -2127,6 +2146,9 @@ const ZH_TW: Bundle = {
   "dispatch.title": "出貨",
   "dispatch.sub": "把各明細從貨架上揀出來，然後記錄出貨 —— 庫存領出，訂單轉為已出貨。",
   "dispatch.picked": "{total} 筆中已揀 {picked} 筆",
+  "dispatch.deliverTo": "送貨至",
+  "dispatch.collection": "自取",
+  "dispatch.collectNote": "{customer} 自行到廠內取貨，無須出貨。",
   "dispatch.cartons": "{count} 箱",
   "dispatch.wrapped": "{count} 件已包裝",
   "dispatch.onHand": "在庫 {qty}",
@@ -2447,6 +2469,9 @@ const AR: Bundle = {
   "dispatch.sub":
     "اجمع البنود من الرف ثم سجّل الشحنة — يُصرف المخزون وينتقل الطلب إلى «مشحون».",
   "dispatch.picked": "{picked} من {total} تم تجهيزها",
+  "dispatch.deliverTo": "التسليم إلى",
+  "dispatch.collection": "استلام من الورشة",
+  "dispatch.collectNote": "{customer} يستلم البضاعة من الورشة بنفسه. لا شيء للشحن.",
   "dispatch.cartons":
     "{count} كرتونة|كرتونة واحدة|كرتونتان|{count} كراتين|{count} كرتونة|{count} كرتونة",
   "dispatch.wrapped": "{count} مغلّفة",

@@ -21,6 +21,15 @@
 import { create } from "zustand";
 
 import {
+  applyAddOnSettings,
+  createRegistry,
+  defaultSettingsFor,
+  EMPTY_REGISTRY,
+  type AddOn,
+  type AddOnRegistry,
+  type AddOnSettings,
+} from "../add-ons/vendor/host/index.ts";
+import {
   CUSTOMERS,
   GLAZES,
   LOT_PREFIX,
@@ -43,6 +52,7 @@ import type {
   PayMethod,
   Persona,
   PoStatus,
+  PostalAddress,
   PurchaseOrder,
   Run,
   SalesOrder,
@@ -84,6 +94,12 @@ export type Theme = "light" | "dark";
 /* Reference data never changes during a session, so it is read once here
  * rather than copied into state and reset with everything else. */
 export const PINNED: Now = source.now();
+/**
+ * WHERE THE WORKS IS. Reference data, read once, like the stations and the
+ * customers — a works does not move mid-shift, and nothing in the app writes to
+ * it. The connected build reads a real row through the same seam.
+ */
+export const WORKS: PostalAddress = source.works();
 export const ALL_STATIONS = STATIONS;
 export const ALL_GLAZES = GLAZES;
 export const ALL_SUPPLIERS = SUPPLIERS;
@@ -140,6 +156,26 @@ interface State {
 
   /* --- the pinned clock --- */
   now: Now;
+
+  /* --- add-ons (24 §5.9) --- */
+  /**
+   * Everything registered, and the two sets that decide what is drawn.
+   *
+   * `enabled` and `credentialled` are separate on purpose and the difference is
+   * not bookkeeping: CONNECTED is a statement about credentials and a contract
+   * with somebody, and SWITCHED ON is a statement about whether the works wants
+   * its surfaces on screen this afternoon. A works can turn a carrier off for a
+   * week without disconnecting the account, and disconnecting has to be able to
+   * remove the credentials without pretending the records went with them.
+   *
+   * `registry` starts EMPTY and `main.tsx` fills it. See `add-ons/registry.ts`
+   * for why that is not the same as building it here.
+   */
+  registry: AddOnRegistry;
+  enabled: ReadonlySet<string>;
+  credentialled: ReadonlySet<string>;
+  /** One add-on's saved values, keyed by add-on key and OPAQUE to this app. */
+  addOnSettings: AddOnSettings;
 
   /* --- data --- */
   items: Item[];
@@ -239,6 +275,12 @@ interface State {
   signHandover: () => void;
 
   toast: (text: string, icon: string) => void;
+
+  registerAddOns: (addOns: readonly AddOn[]) => void;
+  toggleAddOn: (key: string) => void;
+  connectAddOn: (key: string) => void;
+  disconnectAddOn: (key: string) => void;
+  patchAddOnSettings: (addOn: string, patch: Record<string, unknown>) => void;
 }
 
 /** True while any overlay owns a bottom corner, so the dock steps aside. */
@@ -263,6 +305,18 @@ export const useStore = create<State>((set, get) => ({
   dockOpen: true,
 
   now: PINNED,
+
+  registry: EMPTY_REGISTRY,
+  enabled: new Set<string>(),
+  credentialled: new Set<string>(),
+  /*
+   * EMPTY, not `defaultSettingsFor(demoAddOns())`, and the emptiness is what
+   * keeps this module free of every add-on in the app. Importing the registry
+   * here to seed defaults would put every add-on bundle in the module graph of
+   * every screen, because every screen imports the store. The defaults arrive
+   * with the add-ons instead, in `registerAddOns` below.
+   */
+  addOnSettings: {},
 
   ...freshData(),
 
@@ -773,6 +827,97 @@ export const useStore = create<State>((set, get) => ({
     if (get().handoverSigned) return;
     set({ handoverSigned: true });
     get().toast(t("chrome.toast.signed"), "check");
+  },
+
+  /* ------------------------------------------------------------ add-ons */
+
+  /**
+   * Replace the registry with what was registered.
+   *
+   * Nothing is switched on. A works that has just installed the desk has
+   * nothing connected, every screen is finished (24 D6), and the reviewer turns
+   * a carrier on from the Works screen and watches the Dispatch card grow one.
+   * A default of "everything on" would make the app's own claim untestable by
+   * the only person in a position to test it.
+   */
+  registerAddOns: (addOns) => {
+    const registry = createRegistry(addOns);
+    /*
+     * Defaults UNDER whatever the works has already saved, so registering twice
+     * — which `main.tsx` does not do and a hot reload does — cannot undo a
+     * setting somebody changed. `applySettings` is then called once with the
+     * merged document, because an add-on whose engines have never been handed
+     * their settings is an add-on running on its own hard-coded fallbacks.
+     */
+    const addOnSettings = { ...defaultSettingsFor(addOns), ...get().addOnSettings };
+    set({ registry, addOnSettings });
+    applyAddOnSettings(registry.all, addOnSettings);
+  },
+
+  toggleAddOn: (key) =>
+    set((s) => {
+      const enabled = new Set(s.enabled);
+      if (!enabled.delete(key)) enabled.add(key);
+      return { enabled };
+    }),
+
+  /**
+   * Connect, WITHOUT ASKING FOR A CREDENTIAL — and the omission is the design.
+   *
+   * The one add-on here declares `connect: "api-key"`, and a real connection
+   * would collect that key. It is not collected because it must never reach
+   * this store, this bundle or this browser (24 D15): the key belongs to the
+   * add-on's server half, which is where its only outbound request happens.
+   * Nothing in this repo has a field to hold one, which is why there is nothing
+   * to clear on the way out.
+   *
+   * What the works is actually agreeing to here is the DEMO transport, and the
+   * add-on says so in its own words through `demoSwitch` — the Works screen
+   * renders that sentence beside this button rather than the host inventing one
+   * about what a stand-in carrier is.
+   */
+  connectAddOn: (key) =>
+    set((s) => ({
+      credentialled: new Set(s.credentialled).add(key),
+      enabled: new Set(s.enabled).add(key),
+    })),
+
+  /**
+   * Disconnect: the surfaces go, the credentials go, THE RECORDS STAY (24 D16).
+   *
+   * The staying is not a promise this action keeps by being careful — it is one
+   * it cannot break, because nothing below touches `items`, `movements`, `sos`
+   * or anything else the works owns. That is the whole shape of the rule: a
+   * disconnect that had to remember not to delete something would eventually
+   * forget. What the works loses is drawn from `enabled`, and what it keeps is
+   * everything this function does not mention.
+   */
+  disconnectAddOn: (key) =>
+    set((s) => {
+      const credentialled = new Set(s.credentialled);
+      const enabled = new Set(s.enabled);
+      credentialled.delete(key);
+      enabled.delete(key);
+      return { credentialled, enabled };
+    }),
+
+  /**
+   * Merge a patch into one add-on's saved values, AND PUSH THEM.
+   *
+   * The last line is the rule and not a convenience. Add-ons are HANDED their
+   * settings; they never poll for them. An add-on that read this store would be
+   * an add-on coupled to this app's state shape — the coupling the whole seam
+   * exists to prevent — and one that read it on a timer would be worse, because
+   * the version that works is indistinguishable from the version that is one
+   * tick stale. A collection cut-off moved at 14:59 has to price the next quote.
+   */
+  patchAddOnSettings: (addOn, patch) => {
+    const addOnSettings = {
+      ...get().addOnSettings,
+      [addOn]: { ...(get().addOnSettings[addOn] ?? {}), ...patch },
+    };
+    set({ addOnSettings });
+    applyAddOnSettings(get().registry.all, addOnSettings);
   },
 
   /* ------------------------------------------------------------- toasts */

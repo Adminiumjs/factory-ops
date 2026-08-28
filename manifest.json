@@ -30,6 +30,46 @@
   "requiredSchema": {
     "tables": [
       {
+        "ref": "works",
+        "columns": [
+          {
+            "type": "text",
+            "role": "pk",
+            "ref": "id"
+          },
+          {
+            "type": "text",
+            "ref": "name",
+            "nullable": false,
+            "semantic": "name"
+          },
+          {
+            "type": "text",
+            "ref": "line1",
+            "nullable": false
+          },
+          {
+            "type": "text",
+            "ref": "line2"
+          },
+          {
+            "type": "text",
+            "ref": "city",
+            "nullable": false
+          },
+          {
+            "type": "text",
+            "ref": "postcode",
+            "nullable": false
+          },
+          {
+            "type": "text",
+            "ref": "country",
+            "nullable": false
+          }
+        ]
+      },
+      {
         "ref": "glazes",
         "columns": [
           {
@@ -649,6 +689,30 @@
             "type": "date",
             "ref": "required_by",
             "nullable": false
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_name"
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_line1"
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_line2"
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_city"
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_postcode"
+          },
+          {
+            "type": "text",
+            "ref": "deliver_to_country"
           }
         ]
       },

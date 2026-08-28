@@ -32,6 +32,7 @@ import type {
   Item,
   Movement,
   Now,
+  PostalAddress,
   PurchaseOrder,
   Run,
   SalesOrder,
@@ -68,6 +69,45 @@ export const NEXT = {
 
 /** The lot prefix. Lots are minted `LOT-2607-NN` within the month. */
 export const LOT_PREFIX = "LOT-2607-";
+
+/**
+ * WHERE THE WORKS IS — the address a pallet leaves FROM.
+ *
+ * ── WHY IT TOOK THIS LONG TO EXIST ─────────────────────────────────────────
+ *
+ * Because nothing had ever needed it. The app knew where every order was
+ * GOING before it knew where anything came from, which sounds backwards and is
+ * not: an order's destination is a fact about the order, so it arrived with the
+ * order book, and the works' own address is a fact about the works, so it had
+ * no record to arrive on. The screens said "the works" and meant it — there was
+ * no place they could have named.
+ *
+ * A route has two ends. The moment anything in this app has to describe one —
+ * a label, a collection, a delivery note, a courier of any kind — the second
+ * end stops being rhetorical, and a shop that cannot say where it posts from
+ * has to be told rather than asked. So it is a record, in the same shape as
+ * every other address here, seeded once and read through `DataSource`.
+ *
+ * ── ONE ADDRESS AND NOT A PAIR ─────────────────────────────────────────────
+ *
+ * A works can in principle have a trade counter at one door and a loading bay
+ * at another, and a bigger firm would carry both. This one has a gate, and
+ * inventing a second address nothing distinguishes would be a column nobody
+ * could be wrong about. `db/schema.sql` says the same thing with a constraint:
+ * `id = 'works'`, one row.
+ *
+ * THE TOWN IS REAL and the street is not, which is the rule the customers'
+ * addresses already follow — Bridgwater has industrial estates and the TA6
+ * outward code, and no firm on Brickyard Lane exists to be confused with this
+ * one.
+ */
+export const WORKS: PostalAddress = {
+  name: "Kilnworks",
+  lines: ["Unit 7, Brickyard Lane", "Levels Trading Estate"],
+  city: "Bridgwater",
+  postcode: "TA6 4LN",
+  country: "GB",
+};
 
 /* ---------------------------------------------------------------- glazes */
 
@@ -378,7 +418,8 @@ const PRODUCTS: Item[] = [
     name: "Dinner plate 260 · Harbour",
     unit: "ea",
     onHand: 168,
-    allocated: 0,
+    // 72 of these are promised to SO-5110, which is confirmed and unshipped.
+    allocated: 72,
     reorder: 60,
     cost: 0,
     icon: "circle",
@@ -577,7 +618,8 @@ const PRODUCTS: Item[] = [
     name: "Mug 300 · Harbour",
     unit: "ea",
     onHand: 176,
-    allocated: 0,
+    // 48 of these are promised to SO-5110, which is confirmed and unshipped.
+    allocated: 48,
     reorder: 70,
     cost: 0,
     icon: "coffee",
@@ -1056,6 +1098,19 @@ export const CUSTOMERS: Customer[] = [
  * what the order book says is short; `qty − onHand` is what the picker finds on
  * the shelf. The seed keeps them equal so a reader is never asked to reconcile
  * two different numbers for the same problem.
+ *
+ * WHERE EACH ONE GOES is on the order, and the seed repeats a customer's own
+ * address across their orders on purpose: an order takes a COPY of the address
+ * at the moment it is placed, and a customer moving next year does not rewrite
+ * the label on a pallet that went out last month. The two orders that are not
+ * copies are the point — SO-5109 goes to Harbour & Vine's second site while
+ * SO-5102 went to the restaurant, and SO-5108 has no address at all because the
+ * deli collects. Both of those are open, so both are on the Dispatch screen.
+ *
+ * The addresses are invented. The towns are real because the customers already
+ * live in real towns, and the outward halves of the postcodes are the ones
+ * those towns actually use, so nothing on a label reads as nonsense to somebody
+ * who knows the country. No street here belongs to a real firm.
  */
 export const SALES_ORDERS: SalesOrder[] = [
   {
@@ -1065,6 +1120,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-05-28",
     requiredBy: "2026-06-11",
     invoice: "INV-9035",
+    deliverTo: {
+      name: "Pennyfields Homeware",
+      lines: ["Unit 6, Colston Yard"],
+      city: "Bristol",
+      postcode: "BS1 5DL",
+      country: "GB",
+    },
     lines: [
       { sku: "PLT-260-SPK", qty: 120, alloc: 120, price: 11.5, run: null },
       { sku: "BWL-160-SPK", qty: 80, alloc: 80, price: 8.4, run: null },
@@ -1077,6 +1139,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-06-05",
     requiredBy: "2026-06-19",
     invoice: "INV-9036",
+    deliverTo: {
+      name: "Harbour & Vine",
+      lines: ["The Old Sail Loft", "3 Bar Road"],
+      city: "Falmouth",
+      postcode: "TR11 4BN",
+      country: "GB",
+    },
     lines: [
       { sku: "SET-SVC-04", qty: 24, alloc: 24, price: 42, run: null },
       { sku: "MUG-300-HAR", qty: 60, alloc: 60, price: 9.8, run: null },
@@ -1089,6 +1158,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-05-18",
     requiredBy: "2026-05-30",
     invoice: "INV-9037",
+    deliverTo: {
+      name: "Otterbourne Kitchen",
+      lines: ["The Granary", "Water Lane"],
+      city: "Winchester",
+      postcode: "SO23 9EX",
+      country: "GB",
+    },
     lines: [{ sku: "PLT-190-HAR", qty: 200, alloc: 200, price: 7.2, run: null }],
   },
   {
@@ -1098,6 +1174,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-06-22",
     requiredBy: "2026-07-06",
     invoice: "INV-9038",
+    deliverTo: {
+      name: "The Salt Room",
+      lines: ["18 Sea Street"],
+      city: "Whitstable",
+      postcode: "CT5 1AP",
+      country: "GB",
+    },
     lines: [
       { sku: "BWL-160-HAR", qty: 90, alloc: 90, price: 8.8, run: null },
       { sku: "PLT-260-HAR", qty: 60, alloc: 60, price: 12, run: null },
@@ -1110,6 +1193,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-07-02",
     requiredBy: "2026-07-16",
     invoice: "INV-9039",
+    deliverTo: {
+      name: "Bramble & Co",
+      lines: ["4 Northgate Buildings"],
+      city: "Bath",
+      postcode: "BA1 5AS",
+      country: "GB",
+    },
     lines: [{ sku: "MUG-300-SPK", qty: 108, alloc: 108, price: 9.6, run: null }],
   },
   {
@@ -1119,6 +1209,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-07-10",
     requiredBy: "2026-07-24",
     invoice: "INV-9040",
+    deliverTo: {
+      name: "Wrenfield Stores",
+      lines: ["Wrenfield Yard", "Fossgate"],
+      city: "York",
+      postcode: "YO1 9TA",
+      country: "GB",
+    },
     lines: [
       { sku: "PLT-190-SPK", qty: 120, alloc: 120, price: 6.8, run: null },
       { sku: "BWL-160-SPK", qty: 60, alloc: 60, price: 8.4, run: null },
@@ -1131,6 +1228,13 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-07-14",
     requiredBy: "2026-07-27",
     invoice: "INV-9041",
+    deliverTo: {
+      name: "The Copper Pot",
+      lines: ["11 Corve Street"],
+      city: "Ludlow",
+      postcode: "SY8 1DA",
+      country: "GB",
+    },
     lines: [
       { sku: "PLT-260-OXD", qty: 48, alloc: 48, price: 12.5, run: null },
       { sku: "MUG-300-HAR", qty: 72, alloc: 72, price: 9.8, run: null },
@@ -1143,6 +1247,10 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-07-17",
     requiredBy: "2026-07-30",
     invoice: null,
+    // Their own van comes for it — a rush the deli is fetching rather than
+    // waiting on. A null is the COLLECTION, not a missing address; see
+    // `SalesOrder.deliverTo` for what that costs and what it buys.
+    deliverTo: null,
     lines: [
       { sku: "BWL-160-OXD", qty: 60, alloc: 24, price: 9.2, run: null },
       { sku: "MUG-300-SPK", qty: 48, alloc: 48, price: 9.6, run: null },
@@ -1156,10 +1264,64 @@ export const SALES_ORDERS: SalesOrder[] = [
     placed: "2026-07-21",
     requiredBy: "2026-07-31",
     invoice: null,
+    // The second site, and the reason this fact lives on the order rather
+    // than on the customer: SO-5102 went to the Falmouth restaurant.
+    deliverTo: {
+      name: "Harbour & Vine — Truro",
+      lines: ["Unit 2, Tregoose Yard"],
+      city: "Truro",
+      postcode: "TR1 2XN",
+      country: "GB",
+    },
     lines: [
       { sku: "MUG-300-OXD", qty: 48, alloc: 36, price: 10.2, run: null },
       { sku: "PLT-260-SPK", qty: 96, alloc: 96, price: 11.5, run: null },
       { sku: "PLT-190-OXD", qty: 36, alloc: 36, price: 7.4, run: null },
+    ],
+  },
+  {
+    code: "SO-5110",
+    customer: "CUS-03",
+    status: "confirmed",
+    placed: "2026-07-22",
+    requiredBy: "2026-08-04",
+    invoice: null,
+    /*
+     * THE ADDRESS ON THIS ONE IS WRONG, AND IT IS WRONG ON PURPOSE.
+     *
+     * `BS11` is half a postcode: the outward half. Pennyfields moved their
+     * stock out to the warehouse at Avonmouth, the office copied the code off
+     * the old shop's letterhead and stopped at the space, and nothing in this
+     * app has ever had a reason to notice — a label prints what it is given.
+     *
+     * ── WHY A SEED CARRIES A DEFECT AT ALL ─────────────────────────────────
+     *
+     * Because the alternative is a demo in which nothing is ever wrong, and a
+     * works desk whose every address is already perfect teaches a reader
+     * nothing about the half of the job that is chasing an address down. The
+     * two orders around it are the contrast: SO-5109 has a good address and
+     * SO-5108 has none because the customer collects, so all three answers a
+     * real order book gives are on the Dispatch screen at once.
+     *
+     * It is also the only kind of wrong worth seeding: ONE FIELD, visible on
+     * the card, and correctable by typing. Anything that checks a postcode
+     * against its country refuses this and says which field — and if nothing
+     * ever checks, the works posts a pallet to a town rather than an address,
+     * which is exactly the outcome the checking is for.
+     *
+     * The order is otherwise ordinary and both its lines are on the shelf, so
+     * the address is the only thing standing between it and a pallet.
+     */
+    deliverTo: {
+      name: "Pennyfields Homeware — Avonmouth",
+      lines: ["Gate 3, Kingsweston Yard"],
+      city: "Bristol",
+      postcode: "BS11",
+      country: "GB",
+    },
+    lines: [
+      { sku: "PLT-260-HAR", qty: 72, alloc: 72, price: 12, run: null },
+      { sku: "MUG-300-HAR", qty: 48, alloc: 48, price: 9.8, run: null },
     ],
   },
 ];

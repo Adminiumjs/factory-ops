@@ -42,6 +42,7 @@ import {
   Stock,
   Suppliers,
 } from "../screens/Office.tsx";
+import { Works } from "../screens/Works.tsx";
 
 const SCREENS: Record<View, ComponentType> = {
   board: Board,
@@ -58,6 +59,7 @@ const SCREENS: Record<View, ComponentType> = {
   invoices: Invoices,
   recipes: Recipes,
   books: Books,
+  works: Works,
   notfound: NotFound,
 };
 

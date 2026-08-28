@@ -29,6 +29,7 @@ import {
   SALES_ORDERS,
   STATIONS,
   SUPPLIERS,
+  WORKS,
 } from "./demo.ts";
 import type {
   CountSheet,
@@ -40,6 +41,7 @@ import type {
   Item,
   Movement,
   Now,
+  PostalAddress,
   PurchaseOrder,
   Run,
   SalesOrder,
@@ -50,6 +52,17 @@ import type {
 export interface DataSource {
   /** The pinned clock. A live deployment would return the real one here. */
   now(): Now;
+  /**
+   * WHERE THE WORKS IS — the address goods leave from.
+   *
+   * On the seam rather than imported from `demo.ts` for the reason every other
+   * read here is: a connected build's address is whatever the office typed into
+   * the dashboard, and a constant would make the demo's Bridgwater unit the
+   * permanent answer for every tenant. It is not nullable — `db/schema.sql`
+   * carries a one-row table with every column NOT NULL, because a works with no
+   * address is not a state, it is a works that has not been set up.
+   */
+  works(): PostalAddress;
   glazes(): Glaze[];
   items(): Item[];
   stations(): Station[];
@@ -72,6 +85,8 @@ export interface DataSource {
  */
 export const demoSource: DataSource = {
   now: () => ({ ...NOW }),
+  // Copied to the same depth an order's address is: an object holding an array.
+  works: () => ({ ...WORKS, lines: [...WORKS.lines] }),
   glazes: () => GLAZES.map((g) => ({ ...g })),
   items: () =>
     ITEMS.map((i) => ({
@@ -93,7 +108,15 @@ export const demoSource: DataSource = {
   purchaseOrders: () =>
     PURCHASE_ORDERS.map((p) => ({ ...p, lines: p.lines.map((l) => ({ ...l })) })),
   salesOrders: () =>
-    SALES_ORDERS.map((o) => ({ ...o, lines: o.lines.map((l) => ({ ...l })) })),
+    SALES_ORDERS.map((o) => ({
+      ...o,
+      lines: o.lines.map((l) => ({ ...l })),
+      // The address is a nested object with a nested array inside it, so a
+      // spread of the order alone would hand every caller the SAME `lines`
+      // array out of the seed — the one thing the header above promises does
+      // not happen. `null` stays null: a collection has nothing to copy.
+      deliverTo: o.deliverTo === null ? null : { ...o.deliverTo, lines: [...o.deliverTo.lines] },
+    })),
   invoices: () => INVOICES.map((i) => ({ ...i, payments: i.payments.map((p) => ({ ...p })) })),
   countSheets: () =>
     COUNT_SHEETS.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l })) })),
@@ -111,6 +134,7 @@ let read = false;
  */
 export const source: DataSource = {
   now: () => ((read = true), current.now()),
+  works: () => ((read = true), current.works()),
   glazes: () => ((read = true), current.glazes()),
   items: () => ((read = true), current.items()),
   stations: () => ((read = true), current.stations()),

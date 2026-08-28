@@ -65,6 +65,10 @@ function order(patch: Partial<SalesOrder> & { code: string }): SalesOrder {
     requiredBy: "2026-07-15",
     lines: [line({ sku: "A" })],
     invoice: null,
+    // A collection, because nothing the ledger computes has ever cared where
+    // the goods go — and a fixture that quietly invented an address would
+    // suggest one of these sums does.
+    deliverTo: null,
     ...patch,
   };
 }

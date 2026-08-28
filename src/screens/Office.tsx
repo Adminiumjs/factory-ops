@@ -28,7 +28,9 @@ import {
   Send,
 } from "lucide-react";
 
-import type { Invoice, SalesOrder } from "../data/types.ts";
+import { AddOnSlot } from "../add-ons/AddOnSlot.tsx";
+import { outboundOrder, shopClock } from "../add-ons/hostRecords.ts";
+import type { Invoice, PostalAddress, SalesOrder } from "../data/types.ts";
 import { useI18n } from "../i18n/index.tsx";
 import {
   bucketLabel,
@@ -84,6 +86,7 @@ import {
 import {
   ALL_SUPPLIERS,
   TAX,
+  WORKS,
   customerById,
   supplierById,
   useStore,
@@ -851,6 +854,71 @@ export function Orders() {
 
 /* ============================================================== dispatch */
 
+/**
+ * WHERE ONE ORDER'S GOODS GO — both answers, in the same place on the card.
+ *
+ * ── WHY THE ABSENT ADDRESS GETS MORE WORDS THAN THE PRESENT ONE ────────────
+ *
+ * `SalesOrder.deliverTo` is nullable and its null MEANS the customer collects
+ * (see that field for the whole argument). A nullable field is only a state
+ * rather than a hole if something says so where somebody is looking, and the
+ * place somebody is looking is here: the picker has the order ticked off and is
+ * about to decide what happens to the pallet. An empty gap under the customer's
+ * name would read as "the office has not filled this in yet" and the picker
+ * would go and ask. So the null renders a heading of its own and a sentence
+ * naming who is coming for it.
+ *
+ * ── AND WHY THE COUNTRY IS STORED AND NOT PRINTED ──────────────────────────
+ *
+ * `country` is on the record because a carrier checks a postcode against one,
+ * and it is a machine's field. Every address in this works is in one country —
+ * the same assumption `TAX_RATE` already makes with a single VAT rate — so a
+ * two-letter code under every address would be the desk telling itself
+ * something it knows. The first order that leaves the country changes both
+ * decisions at once, and this line is where the second one gets revisited.
+ */
+function ShipTo({ address, customer }: { address: PostalAddress | null; customer: string }) {
+  const { t } = useI18n();
+
+  if (address === null) {
+    return (
+      <div className="kw-shipto">
+        <div className="kw-order__fact">{t("dispatch.collection")}</div>
+        {t("dispatch.collectNote", { customer })}
+        {/*
+          THE WORKS' OWN ADDRESS, on the one card where somebody has to tell a
+          customer where to come. It was "the works" in words until the works
+          had an address anywhere in the repo; naming the place is the whole
+          point of having added one, and the collection card is where a person
+          is standing when they need it.
+         */}
+        <div className="kw-shipto__name" style={{ marginBlockStart: 4 }}>
+          {WORKS.name}
+        </div>
+        {WORKS.lines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+        <div>
+          {WORKS.city} <span className="kw-shipto__post">{WORKS.postcode}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="kw-shipto">
+      <div className="kw-order__fact">{t("dispatch.deliverTo")}</div>
+      <div className="kw-shipto__name">{address.name}</div>
+      {address.lines.map((line, i) => (
+        <div key={i}>{line}</div>
+      ))}
+      <div>
+        {address.city} <span className="kw-shipto__post">{address.postcode}</span>
+      </div>
+    </div>
+  );
+}
+
 export function Dispatch() {
   const { t } = useI18n();
   const sos = useStore((s) => s.sos);
@@ -905,6 +973,7 @@ export function Dispatch() {
                     </Chip>
                   </div>
                   <div className="kw-order__who">{customer?.name}</div>
+                  <ShipTo address={order.deliverTo} customer={customer?.name ?? order.customer} />
                 </div>
                 <div className="kw-order__facts">
                   <div>
@@ -1004,6 +1073,63 @@ export function Dispatch() {
                     {allPicked ? t("dispatch.ship") : t("dispatch.shipBlocked")}
                   </Button>
                 </div>
+
+                {/*
+                  ONE SLOT — `order.dispatch.actions`, under the Ship button.
+                  Four decisions are worth reading before this line is moved.
+
+                  ONLY FOR AN ORDER THAT IS BEING SENT. `deliverTo === null`
+                  MEANS THE CUSTOMER COLLECTS — it is an answer, not a blank —
+                  so a collection order is not offered a carrier at all. The
+                  alternative was to mount it everywhere and let the add-on
+                  report that it has no destination, and that would be this
+                  works telling itself a lie in a more polite voice: nobody is
+                  posting SO-5108, and a "we do not know where this is going"
+                  panel over an order somebody is driving to fetch is a hole
+                  where there is a decision. The card already says so in words
+                  above.
+
+                  NOT GATED ON `allPicked`. The Ship button is, because issuing
+                  stock for a pallet that is not on the pallet is the works'
+                  own rule about its own numbers. Whether a collection can be
+                  booked before the last mug is wrapped is the carrier's rule
+                  and the office's business, and a host that imposed its stock
+                  rule on an add-on's action would be deciding something it was
+                  not asked about.
+
+                  SILENT WHEN NOTHING FILLS IT — no `fallback` prop, matching
+                  `SLOT_EMPTY_BEHAVIOUR`. A works with no carrier connected
+                  books its own transport and this card is already finished
+                  (24 D6); a dashed "no carrier" box under the Ship button
+                  would be the app describing a hole it does not have.
+
+                  NOTHING FROM IN HERE GOES THROUGH `toast()`. This app's toast
+                  takes FINISHED TEXT rather than a key, so a string raised in
+                  one language would sit there in that language while the rest
+                  of the page switched — and an add-on's result is exactly the
+                  kind of text a reader would re-read after switching. The fill
+                  renders its own outcome in place, where it re-renders with the
+                  document's `lang` like everything else. `shipOrder`'s own
+                  toast is the works' own copy and is unchanged.
+                 */}
+                {order.deliverTo !== null && (
+                  <AddOnSlot
+                    slot="order.dispatch.actions"
+                    payload={{
+                      order: outboundOrder(
+                        order,
+                        customer?.name ?? order.customer,
+                        WORKS,
+                        items,
+                      ),
+                      // REQUIRED, and this is the adapter the payload's own
+                      // comment demands: an add-on answering "has today's van
+                      // gone?" off its own clock is telling this works about
+                      // somebody else's Tuesday.
+                      now: shopClock(now),
+                    }}
+                  />
+                )}
               </div>
             </div>
           );

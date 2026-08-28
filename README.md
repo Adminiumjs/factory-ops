@@ -230,7 +230,7 @@ product story, not a limitation:
 | Receiving, picking, shipping, invoicing | Imports, exports and bulk edits |
 | A glanceable view of the money | The full ledger, reporting and period accounts |
 
-The manifest scaffolds 19 tables into your connected database. The scope
+The manifest scaffolds 20 tables into your connected database. The scope
 boundary holds on both sides of the split: there is no journal table anywhere in
 [`db/schema.sql`](db/schema.sql), no chart of accounts and no posting period,
 and nothing in the manifest that would show one.
@@ -245,6 +245,34 @@ browser-safe publishable key (`adm_pub_…`) ships, the frontend will read and
 write live data through the Adminium records API via a second `DataSource`
 implementation, without touching any of the screens or the store. The seam is
 already in place; the key is the only missing piece.
+
+### Add-ons
+
+The Dispatch screen and the Works screen each carry one **add-on slot**. With
+nothing connected they draw exactly what they always drew: the Dispatch card
+ends in its Ship button, and the Works screen says in words that nothing is
+connected and that orders leave the way they always have. That is the point of
+the seam rather than a caveat about it — an add-on is optional, and the desk is
+finished without one.
+
+Connect one from **Works** and the Dispatch card grows a *Book a collection*
+action under the Ship button, for orders that are being sent. An order the
+customer collects — `sales_orders.deliver_to_*` all null — is not offered a
+carrier at all, because collecting is an answer rather than a blank.
+
+The seam itself is installed rather than hand-written, and two scripts keep it
+honest. Both ship here so a cloner and CI can run them:
+
+```sh
+npm run host-kit:status   # the installed seam matches packages/host-kit
+npm run add-ons:status    # the vendored add-ons match the add-ons monorepo
+```
+
+`npm test` runs the seam's guards over this repo: the company-name grep, the
+affiliation-line sweep, the vocabulary ban, the payload-cast ban, the vendored
+copy checks and the stylesheet rule pair. Four more need a rendered DOM and are
+not running here — they are printed by name, with what each one leaves open, on
+every test run.
 
 ### What is deliberately out of scope
 
@@ -261,7 +289,7 @@ already in place; the key is the only missing piece.
 
 ```
 src/
-  app/         App shell + the exhaustive 15-view switch
+  app/         App shell + the exhaustive 16-view switch
   state/       Zustand store (persona, the pinned shift, items, runs,
                movements, orders, invoices, counts, drafts, toasts)
   data/        demo.ts (the seeded works), types.ts, source.ts (DataSource seam)
@@ -272,13 +300,19 @@ src/
   screens/     Floor.tsx  (board, stations, firings, seconds, handover)
                Office.tsx (stock, counts, purchasing, suppliers, orders,
                            dispatch, invoices, recipes, the books)
+               Works.tsx  (the works' own address + what is connected to it)
                NotFound.tsx
+  add-ons/     the add-on seam: slots.ts (the two this app hosts),
+               registry.ts (the only shipped file that names an add-on),
+               hostRecords.ts (this works' records → the neutral payloads),
+               kit/ + host-kit.config.ts (installed seam, see below),
+               vendor/ (synced copies — never hand-edited)
   components/  shell, demo dock, four drawers, primitives
   styles/      tokens.css (canonical design tokens), base.css, components.css,
                screens.css
 db/            schema.sql, generated seed.sql, demo-data toolkit + README
 public/fonts/  self-hosted Manrope + JetBrains Mono (woff2)
-manifest.json  the Adminium install spec (19 tables)
+manifest.json  the Adminium install spec (20 tables)
 ```
 
 ## License

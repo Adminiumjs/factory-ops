@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import {
   Boxes,
   ClipboardCheck,
+  Building2,
   ClipboardList,
   Columns3,
   Factory,
@@ -68,6 +69,12 @@ const NAV: Record<Persona, NavEntry[]> = {
     { view: "invoices", labelKey: "chrome.nav.invoices", icon: Receipt },
     { view: "recipes", labelKey: "chrome.nav.recipes", icon: ListTree },
     { view: "books", labelKey: "chrome.nav.books", icon: Wallet },
+    /*
+     * LAST, and under the money rather than beside the order book, because it
+     * is the only Office view that is not a day's work: the works' own address
+     * and whatever is connected to it. Somebody opens it twice a year.
+     */
+    { view: "works", labelKey: "addon.host.works.title", icon: Building2 },
   ],
 };
 

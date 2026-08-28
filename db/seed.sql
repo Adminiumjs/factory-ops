@@ -13,6 +13,12 @@
 
 BEGIN;
 
+-- The works itself: one row, because there is one gate the goods leave by. Its
+-- address is what a carrier collects FROM, and until this row existed the only
+-- thing the app could say about where a pallet starts was "the works".
+INSERT INTO works (id, name, line1, line2, city, postcode, country) VALUES
+  ('works', 'Kilnworks', 'Unit 7, Brickyard Lane', 'Levels Trading Estate', 'Bridgwater', 'TA6 4LN', 'GB');
+
 INSERT INTO glazes (id, name, tint_from, tint_to) VALUES
   ('speckled', 'Speckled', '#b0a394', '#7c6f5f'),
   ('harbour', 'Harbour', '#5b86b3', '#2f5680'),
@@ -64,7 +70,7 @@ INSERT INTO items (sku, kind, name, unit, on_hand, allocated, reorder, cost, ico
   ('MSC-FLT-02', 'component', 'Felt pads', 'ea', 940, 120, 300, 0.03, 'circle', NULL, NULL, NULL, NULL),
   ('MSC-SAN-03', 'component', 'Sanding pads', 'ea', 64, 0, 25, 0.22, 'square', NULL, NULL, NULL, NULL),
   ('PLT-260-SPK', 'product', 'Dinner plate 260 · Speckled', 'ea', 240, 96, 60, 0, 'circle', 'speckled', 1.85, 0.95, 11.5),
-  ('PLT-260-HAR', 'product', 'Dinner plate 260 · Harbour', 'ea', 168, 0, 60, 0, 'circle', 'harbour', 1.85, 0.95, 12),
+  ('PLT-260-HAR', 'product', 'Dinner plate 260 · Harbour', 'ea', 168, 72, 60, 0, 'circle', 'harbour', 1.85, 0.95, 12),
   ('PLT-260-OXD', 'product', 'Dinner plate 260 · Oxide', 'ea', 96, 0, 50, 0, 'circle', 'oxide', 1.85, 0.95, 12.5),
   ('PLT-190-SPK', 'product', 'Side plate 190 · Speckled', 'ea', 310, 90, 80, 0, 'circle', 'speckled', 1.2, 0.62, 6.8),
   ('PLT-190-HAR', 'product', 'Side plate 190 · Harbour', 'ea', 205, 0, 80, 0, 'circle', 'harbour', 1.2, 0.62, 7.2),
@@ -73,7 +79,7 @@ INSERT INTO items (sku, kind, name, unit, on_hand, allocated, reorder, cost, ico
   ('BWL-160-HAR', 'product', 'Bowl 160 · Harbour', 'ea', 140, 0, 60, 0, 'soup', 'harbour', 1.45, 0.72, 8.8),
   ('BWL-160-OXD', 'product', 'Bowl 160 · Oxide', 'ea', 24, 24, 40, 0, 'soup', 'oxide', 1.45, 0.72, 9.2),
   ('MUG-300-SPK', 'product', 'Mug 300 · Speckled', 'ea', 260, 48, 70, 0, 'coffee', 'speckled', 1.65, 0.8, 9.6),
-  ('MUG-300-HAR', 'product', 'Mug 300 · Harbour', 'ea', 176, 0, 70, 0, 'coffee', 'harbour', 1.65, 0.8, 9.8),
+  ('MUG-300-HAR', 'product', 'Mug 300 · Harbour', 'ea', 176, 48, 70, 0, 'coffee', 'harbour', 1.65, 0.8, 9.8),
   ('MUG-300-OXD', 'product', 'Mug 300 · Oxide', 'ea', 36, 36, 40, 0, 'coffee', 'oxide', 1.65, 0.8, 10.2),
   ('JUG-900-OXD', 'product', 'Water jug 900 · Oxide', 'ea', 18, 0, 20, 0, 'milk', 'oxide', 3.2, 1.4, 13.2),
   ('SET-SVC-04', 'product', 'Restaurant service set · four pieces', 'set', 60, 0, 12, 0, 'utensils', 'matt', 7.4, 3.1, 42);
@@ -229,16 +235,29 @@ INSERT INTO purchase_order_lines (po_code, sku, qty, received, cost) VALUES
   ('PO-8813', 'CLY-STW-WHT', 200, 200, 1.65),
   ('PO-8814', 'GLZ-OXD-03', 30, 0, 11.4);
 
-INSERT INTO sales_orders (code, customer_id, status, placed_on, required_by) VALUES
-  ('SO-5101', 'CUS-03', 'invoiced', '2026-05-28', '2026-06-11'),
-  ('SO-5102', 'CUS-01', 'invoiced', '2026-06-05', '2026-06-19'),
-  ('SO-5103', 'CUS-05', 'invoiced', '2026-05-18', '2026-05-30'),
-  ('SO-5104', 'CUS-02', 'invoiced', '2026-06-22', '2026-07-06'),
-  ('SO-5105', 'CUS-04', 'invoiced', '2026-07-02', '2026-07-16'),
-  ('SO-5106', 'CUS-07', 'invoiced', '2026-07-10', '2026-07-24'),
-  ('SO-5107', 'CUS-06', 'invoiced', '2026-07-14', '2026-07-27'),
-  ('SO-5108', 'CUS-08', 'picking', '2026-07-17', '2026-07-30'),
-  ('SO-5109', 'CUS-01', 'confirmed', '2026-07-21', '2026-07-31');
+-- SO-5108's address columns are all NULL because the deli collects, which the
+-- schema's own check is what keeps distinguishable from a half-typed address.
+-- SO-5109 goes to Harbour & Vine's second site while SO-5102 went to the
+-- restaurant — the pair that says why the address is on the order.
+INSERT INTO sales_orders (code, customer_id, status, placed_on, required_by,
+                          deliver_to_name, deliver_to_line1, deliver_to_line2,
+                          deliver_to_city, deliver_to_postcode, deliver_to_country) VALUES
+  ('SO-5101', 'CUS-03', 'invoiced', '2026-05-28', '2026-06-11', 'Pennyfields Homeware', 'Unit 6, Colston Yard', NULL, 'Bristol', 'BS1 5DL', 'GB'),
+  ('SO-5102', 'CUS-01', 'invoiced', '2026-06-05', '2026-06-19', 'Harbour & Vine', 'The Old Sail Loft', '3 Bar Road', 'Falmouth', 'TR11 4BN', 'GB'),
+  ('SO-5103', 'CUS-05', 'invoiced', '2026-05-18', '2026-05-30', 'Otterbourne Kitchen', 'The Granary', 'Water Lane', 'Winchester', 'SO23 9EX', 'GB'),
+  ('SO-5104', 'CUS-02', 'invoiced', '2026-06-22', '2026-07-06', 'The Salt Room', '18 Sea Street', NULL, 'Whitstable', 'CT5 1AP', 'GB'),
+  ('SO-5105', 'CUS-04', 'invoiced', '2026-07-02', '2026-07-16', 'Bramble & Co', '4 Northgate Buildings', NULL, 'Bath', 'BA1 5AS', 'GB'),
+  ('SO-5106', 'CUS-07', 'invoiced', '2026-07-10', '2026-07-24', 'Wrenfield Stores', 'Wrenfield Yard', 'Fossgate', 'York', 'YO1 9TA', 'GB'),
+  ('SO-5107', 'CUS-06', 'invoiced', '2026-07-14', '2026-07-27', 'The Copper Pot', '11 Corve Street', NULL, 'Ludlow', 'SY8 1DA', 'GB'),
+  ('SO-5108', 'CUS-08', 'picking', '2026-07-17', '2026-07-30', NULL, NULL, NULL, NULL, NULL, NULL),
+  ('SO-5109', 'CUS-01', 'confirmed', '2026-07-21', '2026-07-31', 'Harbour & Vine — Truro', 'Unit 2, Tregoose Yard', NULL, 'Truro', 'TR1 2XN', 'GB'),
+  -- The postcode here is HALF A POSTCODE, and it is seeded wrong on purpose:
+  -- Pennyfields moved their stock to the warehouse at Avonmouth and the office
+  -- copied the outward half off the old shop's letterhead. A works meets this
+  -- every week, it is one field's worth of wrong, and anything that checks a
+  -- postcode against a country will refuse it. See `src/data/demo.ts` for the
+  -- whole argument about why the seed carries a defect at all.
+  ('SO-5110', 'CUS-03', 'confirmed', '2026-07-22', '2026-08-04', 'Pennyfields Homeware — Avonmouth', 'Gate 3, Kingsweston Yard', NULL, 'Bristol', 'BS11', 'GB');
 
 INSERT INTO sales_order_lines (so_code, sku, qty, alloc, price, run_code) VALUES
   ('SO-5101', 'PLT-260-SPK', 120, 120, 11.5, NULL),
@@ -258,7 +277,9 @@ INSERT INTO sales_order_lines (so_code, sku, qty, alloc, price, run_code) VALUES
   ('SO-5108', 'PLT-190-SPK', 90, 90, 6.8, NULL),
   ('SO-5109', 'MUG-300-OXD', 48, 36, 10.2, NULL),
   ('SO-5109', 'PLT-260-SPK', 96, 96, 11.5, NULL),
-  ('SO-5109', 'PLT-190-OXD', 36, 36, 7.4, NULL);
+  ('SO-5109', 'PLT-190-OXD', 36, 36, 7.4, NULL),
+  ('SO-5110', 'PLT-260-HAR', 72, 72, 12, NULL),
+  ('SO-5110', 'MUG-300-HAR', 48, 48, 9.8, NULL);
 
 INSERT INTO invoices (number, so_code, customer_id, issued_on, due_on) VALUES
   ('INV-9035', 'SO-5101', 'CUS-03', '2026-06-11', '2026-06-25'),

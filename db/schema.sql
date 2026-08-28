@@ -8,7 +8,7 @@
 -- same twenty components, the same fourteen finished pieces, the same Tuesday
 -- morning — so the desk and the dashboard show the same works.
 --
--- Fifteen tables, and three rules that hold across all of them.
+-- Twenty tables, and three rules that hold across all of them.
 --
 -- 1. NOTHING DERIVED IS STORED. There is no column for a run's yield, an item's
 --    available quantity, an invoice's status or its outstanding amount, or any
@@ -60,8 +60,39 @@ DROP TABLE IF EXISTS stations CASCADE;
 DROP TABLE IF EXISTS glazes CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS works CASCADE;
 
 -- Reference ------------------------------------------------------------------
+
+-- WHERE THE WORKS ITSELF IS. One row, and the CHECK is what says so.
+--
+-- It is a table and not a constant in the app for the same reason every other
+-- fact here is a table: the auto-generated dashboard IS the office, and an
+-- address the office cannot correct is an address that is wrong for ever the
+-- day the works moves a unit. `id = 'works'` is a single-row constraint spelt
+-- the only way this schema can spell one — a works has one gate that goods
+-- leave by, and a second row here would be a second answer to a question that
+-- has one.
+--
+-- The columns match `sales_orders`' delivery columns deliberately: the same
+-- five parts a label needs, in the same order, under the same names minus the
+-- `deliver_to_` prefix. One address shape in this schema and not two, so
+-- reading a route out of it is symmetrical at both ends.
+--
+-- All NOT NULL, which is the difference between this and a delivery address:
+-- there a NULL means the customer collects, and here there is no answer that
+-- means anything. Every works has a door.
+CREATE TABLE works (
+  id           text PRIMARY KEY CHECK (id = 'works'),
+  name         text NOT NULL,
+  line1        text NOT NULL,
+  line2        text,
+  city         text NOT NULL,
+  postcode     text NOT NULL,
+  -- ISO 3166-1 alpha-2, for `sales_orders.deliver_to_country`'s reason: it is
+  -- the one field here a machine reads.
+  country      text NOT NULL
+);
 
 -- A glaze is a colour on a shelf and a tint on a tile, so the two live in one
 -- row. `tint_from`/`tint_to` are the gradient stops every piece in that glaze is
@@ -261,13 +292,41 @@ CREATE TABLE purchase_order_lines (
   CHECK (received <= qty)
 );
 
+-- Where the goods go is on the ORDER, not on the customer, for two reasons a
+-- works meets in its first month. One customer can have more than one door — a
+-- second site, a warehouse behind the shop — and an order is a COPY taken when
+-- it was placed, so a customer moving does not rewrite the label on a pallet
+-- that has already gone out.
+--
+-- All six columns are nullable and they are not independently so: a NULL
+-- address MEANS THE CUSTOMER COLLECTS, and the check below is what keeps that
+-- meaning from decaying into "somebody stopped halfway through the form".
+-- Either the five parts a label needs are all there or none of them are.
+-- `deliver_to_line2` is outside the count because a one-line address is
+-- ordinary, but it cannot appear without a first line above it.
+--
+-- Two lines and not an array, because the manifest's column vocabulary has no
+-- list type that a generated dashboard would render as anything but JSON, and
+-- nothing in this fiction — or in the seam this shape is borrowed from — has
+-- ever needed a third.
 CREATE TABLE sales_orders (
-  code         text PRIMARY KEY,
-  customer_id  text NOT NULL REFERENCES customers (id),
-  status       text NOT NULL CHECK (status IN
-                 ('draft', 'confirmed', 'picking', 'shipped', 'invoiced')),
-  placed_on    date NOT NULL,
-  required_by  date NOT NULL
+  code                text PRIMARY KEY,
+  customer_id         text NOT NULL REFERENCES customers (id),
+  status              text NOT NULL CHECK (status IN
+                        ('draft', 'confirmed', 'picking', 'shipped', 'invoiced')),
+  placed_on           date NOT NULL,
+  required_by         date NOT NULL,
+  deliver_to_name     text,
+  deliver_to_line1    text,
+  deliver_to_line2    text,
+  deliver_to_city     text,
+  deliver_to_postcode text,
+  -- ISO 3166-1 alpha-2. A code and not a country's name, because it is the one
+  -- field here a machine reads: a carrier checks a postcode against a country.
+  deliver_to_country  text,
+  CHECK (num_nonnulls(deliver_to_name, deliver_to_line1, deliver_to_city,
+                      deliver_to_postcode, deliver_to_country) IN (0, 5)),
+  CHECK (deliver_to_line2 IS NULL OR deliver_to_line1 IS NOT NULL)
 );
 
 CREATE TABLE sales_order_lines (

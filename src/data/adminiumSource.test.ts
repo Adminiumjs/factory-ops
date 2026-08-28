@@ -22,6 +22,10 @@ import { loadSnapshot, snapshotSource } from "./adminiumSource.ts";
 import { demoSource, isConnected, setDataSource, source } from "./source.ts";
 
 const ROWS: Record<string, unknown[]> = {
+  works: [{
+    id: "works", name: "Test Works", line1: "1 Test Lane", line2: null,
+    city: "Testburgh", postcode: "TE1 1ST", country: "GB",
+  }],
   glazes: [{ id: "OXD", name: "Oxide", tint_from: "#a", tint_to: "#b" }],
   stations: [{ id: "ST-K1", name: "Kiln 1", icon: "flame", operator: "Rosa" }],
   suppliers: [
@@ -73,7 +77,26 @@ const ROWS: Record<string, unknown[]> = {
   movements: [{ sku: "CLY-STW-WHT", moved_on: "2026-07-27", kind: "receipt", ref: "PO-5501", qty: "60.000", lot: null }],
   purchaseOrders: [{ code: "PO-5501", supplier_id: "SUP-CLY", status: "received", raised_on: "2026-07-10", due_on: "2026-07-20" }],
   purchaseOrderLines: [{ po_code: "PO-5501", sku: "CLY-STW-WHT", qty: "60.000", received: "60.000", cost: "1.10" }],
-  salesOrders: [{ code: "SO-8801", customer_id: "CUS-01", status: "confirmed", placed_on: "2026-07-15", required_by: "2026-08-05" }],
+  // Three orders, one per state the delivery address can arrive in: a whole
+  // one, an empty one (the customer collects), and the half-filled row the
+  // schema forbids and the wire cannot.
+  salesOrders: [
+    {
+      code: "SO-8801", customer_id: "CUS-01", status: "confirmed", placed_on: "2026-07-15", required_by: "2026-08-05",
+      deliver_to_name: "Harbour Ceramics", deliver_to_line1: "The Old Bonded Store", deliver_to_line2: "9 Shore Road",
+      deliver_to_city: "Leith", deliver_to_postcode: "EH6 6QU", deliver_to_country: "GB",
+    },
+    {
+      code: "SO-8802", customer_id: "CUS-01", status: "picking", placed_on: "2026-07-16", required_by: "2026-08-06",
+      deliver_to_name: null, deliver_to_line1: null, deliver_to_line2: null,
+      deliver_to_city: null, deliver_to_postcode: null, deliver_to_country: null,
+    },
+    {
+      code: "SO-8803", customer_id: "CUS-01", status: "picking", placed_on: "2026-07-17", required_by: "2026-08-07",
+      deliver_to_name: "Harbour Ceramics", deliver_to_line1: null, deliver_to_line2: null,
+      deliver_to_city: null, deliver_to_postcode: "EH6 6QU", deliver_to_country: "GB",
+    },
+  ],
   salesOrderLines: [{ so_code: "SO-8801", sku: "BWL-160-OXD", qty: "100.000", alloc: "40.000", price: "18.00", run_code: "RUN-2314" }],
   invoices: [{ number: "INV-2201", so_code: "SO-8801", customer_id: "CUS-01", issued_on: "2026-07-16", due_on: "2026-08-15" }],
   payments: [{ invoice_no: "INV-2201", paid_on: "2026-07-30", method: "transfer", amount: "900.00" }],
@@ -207,6 +230,51 @@ describe("the two WS-I gaps degrade visibly", () => {
     const snap = await snapshot();
     expect(snap.suppliers.find((s) => s.id === "SUP-CLY")!.supplies).toEqual(["CLY-STW-WHT"]);
     expect(snap.suppliers.find((s) => s.id === "SUP-NEW")!.supplies).toEqual([]);
+  });
+});
+
+describe("the delivery address keeps its meaning across the wire", () => {
+  it("rebuilds a whole address out of the six columns", async () => {
+    const snap = await snapshot();
+    expect(snap.salesOrders.find((o) => o.code === "SO-8801")!.deliverTo).toEqual({
+      name: "Harbour Ceramics",
+      lines: ["The Old Bonded Store", "9 Shore Road"],
+      city: "Leith",
+      postcode: "EH6 6QU",
+      country: "GB",
+    });
+  });
+
+  it("reads an empty address as the collection it means, not as a blank", async () => {
+    const snap = await snapshot();
+    expect(snap.salesOrders.find((o) => o.code === "SO-8802")!.deliverTo).toBeNull();
+  });
+
+  it("refuses to turn a half-filled address into a collection", async () => {
+    // THE FAILURE THIS PINS. `db/schema.sql` will not store four parts out of
+    // five, but that CHECK has no home in `manifest.json`, so a connected scope
+    // can send one. Reading it as null would silently reclassify an order
+    // somebody typed a postcode into as one nobody is delivering — and no
+    // screen would ever say why. The gaps stay visible instead.
+    const snap = await snapshot();
+    const partial = snap.salesOrders.find((o) => o.code === "SO-8803")!.deliverTo;
+    expect(partial).not.toBeNull();
+    expect(partial).toEqual({
+      name: "Harbour Ceramics",
+      lines: [],
+      city: "",
+      postcode: "EH6 6QU",
+      country: "GB",
+    });
+  });
+
+  it("hands back a copy of the address, not the snapshot's own", async () => {
+    const connected = snapshotSource(await snapshot());
+    connected.salesOrders()[0]!.deliverTo!.lines.push("mutated");
+    expect(connected.salesOrders()[0]!.deliverTo!.lines).toEqual([
+      "The Old Bonded Store",
+      "9 Shore Road",
+    ]);
   });
 });
 
