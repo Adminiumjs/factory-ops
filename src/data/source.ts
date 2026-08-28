@@ -7,10 +7,11 @@
  * than a rewrite — the screens and the store already talk to this interface and
  * never import `demo.ts` for data they render.
  *
- * When `@adminium/manifest` lands (Phase B), a second implementation backed by
- * `AdminiumDataSource` slots in here and `demoSource` becomes the fallback used
- * when no `adm_pub_` key is configured. The tables in `db/schema.sql` are the
- * contract that implementation will read.
+ * That second implementation now exists: `adminiumSource.ts` reads a real
+ * Adminium instance through `@adminiumjs/public-client` and is swapped in by
+ * `main.tsx` before React mounts. `demoSource` remains the fallback whenever
+ * either build-time env var is absent — which is the case for every
+ * marketplace demo, and is why that fallback is structural rather than a catch.
  */
 
 import {
@@ -98,5 +99,55 @@ export const demoSource: DataSource = {
     COUNT_SHEETS.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l })) })),
 };
 
-/** The source the app is currently wired to. */
-export const source: DataSource = demoSource;
+let current: DataSource = demoSource;
+let read = false;
+
+/**
+ * The source the app is currently wired to.
+ *
+ * An indirection rather than a `let`, because the store reads it at MODULE
+ * SCOPE — a re-exported binding would be captured at import time and a later
+ * swap would change nothing.
+ */
+export const source: DataSource = {
+  now: () => ((read = true), current.now()),
+  glazes: () => ((read = true), current.glazes()),
+  items: () => ((read = true), current.items()),
+  stations: () => ((read = true), current.stations()),
+  runs: () => ((read = true), current.runs()),
+  firings: () => ((read = true), current.firings()),
+  defects: () => ((read = true), current.defects()),
+  movements: () => ((read = true), current.movements()),
+  suppliers: () => ((read = true), current.suppliers()),
+  customers: () => ((read = true), current.customers()),
+  purchaseOrders: () => ((read = true), current.purchaseOrders()),
+  salesOrders: () => ((read = true), current.salesOrders()),
+  invoices: () => ((read = true), current.invoices()),
+  countSheets: () => ((read = true), current.countSheets()),
+};
+
+/**
+ * Swap the backing source. Must happen before any module-scope read.
+ *
+ * The tripwire is the whole reason this is a function and not an assignment:
+ * the ordering it depends on is invisible, and getting it wrong fails SILENTLY
+ * — the app renders demo data against a configured backend and looks fine.
+ */
+export function setDataSource(next: DataSource): void {
+  if (read) {
+    throw new Error(
+      "setDataSource() called after the store already read — import App dynamically, after the snapshot resolves.",
+    );
+  }
+  current = next;
+}
+
+/**
+ * True once a real backend is behind the seam.
+ *
+ * Read by the demo dock, which resets and advances seeded fiction: against real
+ * rows those controls either lie or do damage, so it does not render.
+ */
+export function isConnected(): boolean {
+  return current !== demoSource;
+}

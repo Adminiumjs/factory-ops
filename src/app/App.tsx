@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import type { ComponentType } from "react";
 
 import DemoDock from "../components/DemoDock.tsx";
+import { isConnected } from "../data/source.ts";
 import {
   HistoryDrawer,
   InvoiceDrawer,
@@ -103,7 +104,9 @@ export default function App() {
       <Shell>
         <CurrentScreen />
       </Shell>
-      <DemoDock />
+      {/* §5.2 item 8 — the dock resets and advances seeded fiction. Against
+          real rows those controls either lie or do damage. */}
+      {!isConnected() && <DemoDock />}
       <ToastLayer />
       <RunPanel />
       <HistoryDrawer />
