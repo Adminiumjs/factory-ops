@@ -130,7 +130,7 @@ FILES_shipping_dhl=(
   demo-carrier.ts settings.ts runtime.ts index.ts
   i18n/strings.ts i18n/t.ts
   ui/atoms.tsx ui/labels.ts ui/DispatchAction.tsx ui/DeliveryMethods.tsx
-  ui/SettingsPanel.tsx ui/TrackingPanel.tsx
+  ui/SettingsPanel.tsx ui/TrackingPanel.tsx ui/ReturnLabel.tsx
 )
 
 # The second add-on, and the first one here with NO SERVER HALF AT ALL — both
