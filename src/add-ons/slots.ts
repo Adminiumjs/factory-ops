@@ -3,7 +3,7 @@
  *
  * ── THE ONES IT MOUNTS, AND THE ONES IT CANNOT HAVE ────────────────────────
  *
- * The closed registry has twelve ids (`vendor/host/slots.ts`). A works desk
+ * The closed registry is in `vendor/host/slots.ts`. A works desk
  * mounts three of them, and the interesting part of this file is which of the
  * rest it does not and why — because "we only did the easy ones" and "these are
  * what this app has" read identically until somebody writes the second one
@@ -81,10 +81,11 @@ import type { SlotEmptyBehaviour, SlotId } from "./vendor/host/index.ts";
  *
  * `vendor/host/slots.ts` exports the CLOSED REGISTRY under this same name,
  * `HOSTED_SLOTS`, and importing that one instead would silently widen every
- * check the kit runs: the mounts guard would demand mounts for twelve ids, the
- * table below would need twelve rows, and `<AddOnSlot>` would accept ids this
- * app never draws. The kit asserts this list is a strict subset of the registry
- * so that the mis-import is a named failure rather than a quiet widening.
+ * check the kit runs: the mounts guard would demand mounts for every id in the
+ * registry, the table below would need a row for each, and `<AddOnSlot>` would
+ * accept ids this app never draws. The kit asserts this list is a strict subset
+ * of the registry so that the mis-import is a named failure rather than a
+ * quiet widening.
  */
 export const HOSTED_SLOTS = [
   "order.dispatch.actions",
