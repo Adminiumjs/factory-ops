@@ -8,9 +8,9 @@
  * lines that are short by exactly what the "Make it" button will raise a run
  * for.
  *
- * 21 D15 is asserted here too. If somebody ever adds a journal or a period
- * close to `ledger.ts`, the last test in this file is the one that should have
- * stopped them.
+ * The scope boundary is asserted here too. If somebody ever adds a journal or
+ * a period close to `ledger.ts`, the last test in this file is the one that
+ * should have stopped them.
  */
 
 import { describe, expect, it } from "vitest";
@@ -560,7 +560,7 @@ describe("the seeded works", () => {
   });
 
   /*
-   * 21 D15 — the boundary, asserted rather than merely documented. "The books"
+   * The boundary, asserted rather than merely documented. "The books"
    * is a roll-up over data the app already holds. If a future change adds a
    * journal, a chart of accounts or a period close to this engine, this is the
    * test that fails first.

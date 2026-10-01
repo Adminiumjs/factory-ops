@@ -85,7 +85,7 @@ export function demoAddOns(): AddOn[] {
  * What every add-on starts from, keyed by add-on key and OPAQUE to this app.
  *
  * The carrier's two secret settings — an API key and an account number — are
- * absent BY CONSTRUCTION rather than by omission (24 D15): they are declared
+ * absent BY CONSTRUCTION rather than by omission: they are declared
  * `secret` in the add-on's manifest, they live in its server half, and a store
  * the browser can read is precisely where they must never appear. Nothing in
  * this repo has a field to put one in.

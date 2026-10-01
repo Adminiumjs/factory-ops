@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * Connected mode (28-public-surface.md §5.2, 28-T28 wave 4).
+ * Connected mode.
  *
  * Drives the SHIPPED client against canned wire responses rather than a stub of
  * it, so `assertRefs`, the config fetch and URL building are under test too —
@@ -10,8 +10,8 @@
  * quietly stopping (thirteen public demos break, build stays green), a swap
  * arriving after the store has read (renders demo data against a real backend
  * and looks correct), a child table grouped by the wrong parent, and the two
- * WS-I gaps this repo carries — both of which degrade rather than throw, which
- * is exactly why they need asserting.
+ * schema gaps this repo carries — both of which degrade rather than throw,
+ * which is exactly why they need asserting.
  */
 
 import { describe, expect, it } from "vitest";
@@ -207,7 +207,7 @@ describe("child rows group by their parent's text key", () => {
   });
 });
 
-describe("the two WS-I gaps degrade visibly", () => {
+describe("the two schema gaps degrade visibly", () => {
   it("recognises a firing programme by its display text, and shows nothing when renamed", async () => {
     // GAP 1. `firings.programme` stores operator-editable text and the ramp
     // steps have no table, so a renamed programme loses its steps. Visible on
@@ -283,7 +283,7 @@ describe("the clock and the seam", () => {
     const snap = await snapshot();
     expect(snap.now.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(typeof snap.now.minutes).toBe("number");
-    // WS-I G4 — the shift has no home in the schema.
+    // The shift has no home in the schema.
     expect(snap.now.shiftStart).toBe(420);
     expect(snap.now.shiftEnd).toBe(930);
   });

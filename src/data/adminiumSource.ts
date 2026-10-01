@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * A `DataSource` backed by a real Adminium instance (28-public-surface.md §5.2,
- * 28-T28 wave 4).
+ * A `DataSource` backed by a real Adminium instance.
  *
  * ── READS DO NOT BECOME ASYNC ──────────────────────────────────────────────
  * `loadSnapshot` fetches the whole read-set once, before React mounts, and
@@ -24,13 +23,13 @@
  * child row needs a stable PARENT, not a stable id of its own.
  *
  * ── TWO THINGS THE SCHEMA CANNOT SAY, MARKED NOT HIDDEN ────────────────────
- * 28-T33 counted "two missing tables" for this repo. They are:
+ * An audit of the example apps counted "two missing tables" here. They are:
  *
  *  1. **A firing programme is not a row.** `firings.programme` stores display
  *     text ("Glaze · 1240 °C"), and the ramp/soak/cool steps the kiln screen
  *     draws exist nowhere in `db/schema.sql`. So the programme is recognised by
  *     its text and its steps come from the catalogue below — operator-editable
- *     text used as identity, which is exactly the WS-I defect clinic-desk
+ *     text used as identity, which is exactly the defect clinic-desk
  *     carries for visit types. It wants a `firing_programmes` table with a
  *     stable id and a `firing_programme_steps` child.
  *  2. **What a supplier supplies is not a column.** It is DERIVED here from the
@@ -145,7 +144,7 @@ interface WireCountSheet { code: string; zone: string; walked_by: string; opened
 interface WireCountLine { sheet_code: string; sku: string; counted: string | null }
 
 /*
- * WS-I GAP 1 — the firing programme catalogue, recognised by display text
+ * GAP 1 — the firing programme catalogue, recognised by display text
  * because `firings.programme` is the only thing that names it. A renamed
  * programme falls through to no steps, which is visible on the kiln screen
  * rather than silent, and is itself the argument for the missing table.
@@ -171,7 +170,7 @@ const PROGRAMMES: Record<string, { key: string; steps: FiringStep[] }> = {
   },
 };
 
-/* WS-I G4 — the shift, which `db/schema.sql` has nowhere to put. */
+/* The shift, which `db/schema.sql` has nowhere to put. */
 const SHIFT = { shiftStart: 7 * 60, shiftEnd: 15 * 60 + 30 } as const;
 
 /** The columns the scope must expose, checked at boot. */
@@ -260,7 +259,7 @@ const num = (value: string | null): number => Number(value ?? 0);
  * gaps left visible — a blank line on the Dispatch card is an office job
  * somebody can see and fix, which a silently reclassified order is not.
  *
- * The same reasoning as the two WS-I gaps this file carries: degrade where it
+ * The same reasoning as the two schema gaps this file carries: degrade where it
  * shows, and pin the degradation in a test so it stays a decision.
  */
 /**
@@ -386,7 +385,7 @@ export async function loadSnapshot(client: PublicClient): Promise<Snapshot | nul
     const paymentsByInvoice = groupBy(payments, (p) => p.invoice_no);
     const countLinesBySheet = groupBy(countLines, (l) => l.sheet_code);
 
-    // WS-I GAP 2 — what a supplier supplies, derived from what has been ordered
+    // GAP 2 — what a supplier supplies, derived from what has been ordered
     // from them rather than from a column that does not exist.
     const poSupplier = new Map(pos.map((po) => [po.code, po.supplier_id]));
     const suppliesBySupplier = new Map<string, Set<string>>();

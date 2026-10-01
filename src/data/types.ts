@@ -59,7 +59,7 @@ export const HOME_VIEW: Record<Persona, View> = {
  *
  * `date` is the shift's calendar day and `minutes` is the point in it. Unlike
  * the clinic desk and the hotel, this app ships NO clock control: the Floor
- * advances the board, not the hour (21 D6a). The value is therefore constant
+ * advances the board, not the hour. The value is therefore constant
  * for the whole session and exists so that ages, elapsed chips and required-by
  * dates have one place to resolve against instead of reading a real clock.
  */

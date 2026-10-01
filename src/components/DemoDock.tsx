@@ -7,7 +7,7 @@
  * a feature of the works' software.
  *
  * THERE IS NO CLOCK CHIP HERE, and that is a design decision rather than an
- * omission (21 D6a). The clinic desk moves time forward and the hotel jumps to
+ * omission. The clinic desk moves time forward and the hotel jumps to
  * check-out; on this app the Floor advances the board and time simply stands at
  * 10:15. Adding a clock would imply that runs progress on their own, which is
  * the opposite of what a works desk is for.

@@ -10,8 +10,8 @@
  * ── WHY EVERY KEY STARTS `addon.` ──────────────────────────────────────────
  *
  * Because the vocabulary gate splits on that prefix. It fails over
- * ADD-ON-CONTRIBUTED strings and reports the app's pre-existing copy as debt
- * (31 D4), and "contributed" means both halves: an add-on's own bundle
+ * ADD-ON-CONTRIBUTED strings and reports the app's pre-existing copy as debt,
+ * and "contributed" means both halves: an add-on's own bundle
  * (`addon.<key>.…`) and the copy a host writes at a mount site. Filing these
  * under `screens.*` would quietly move them onto the debt side, where a banned
  * word would be reported and not refused. This module is the newest copy in the

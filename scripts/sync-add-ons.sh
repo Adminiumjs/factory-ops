@@ -70,7 +70,7 @@
 # WHAT IS DELIBERATELY NOT COPIED, and none of it is an oversight:
 #   *.test.ts(x)   the monorepo runs its own suites; re-running them here would
 #                  assert the copy rather than the thing (and the conformance
-#                  suites pull in zod, which the host does not carry — 24 D7).
+#                  suites pull in zod, which the host does not carry).
 #   src/testing/   the copied conformance harness and build helpers, same
 #                  reason. The shared package's `testing/` entry point — where
 #                  its zod validators live — is never vendored either.
@@ -78,7 +78,7 @@
 #                  manifest suite. This app has its own `src/add-ons/slots.ts`,
 #                  which is the authoritative list of what it hosts.
 #   src/carrier.ts src/http.ts src/server.ts src/server/artwork-source.ts
-#                  the SERVER halves. Secrets are server-only (24 D15) and the
+#                  the SERVER halves. Secrets are server-only and the
 #                  client bundle must not be able to reach the module that holds
 #                  them. `status` fails if one ever appears under vendor/.
 #   vite-env.d.ts  ambient Vite types the host already has.
@@ -136,9 +136,9 @@ FILES_shipping_dhl=(
 # The second add-on, and the first one here with NO SERVER HALF AT ALL — both
 # symbol tables are compiled into the bundle, there is no credential and no
 # address, so every file it has is a file the browser gets. That is why nothing
-# below is left out for D15 reasons and why the FORBIDDEN sweep finds nothing to
-# refuse: the list is short because the package is inert, not because anything
-# was trimmed.
+# below is left out to keep a secret server-side and why the FORBIDDEN sweep
+# finds nothing to refuse: the list is short because the package is inert, not
+# because anything was trimmed.
 #
 # `slots.ts` is absent for the reason at the top of this file — each package's
 # `FILLED_SLOTS` is read only by its own manifest suite, and this app's
@@ -151,7 +151,7 @@ FILES_barcode_labels=(
   ui/atoms.tsx ui/SettingsPanel.tsx ui/RecordAction.tsx
 )
 
-# Modules that must never be reachable from the browser half (D15), and the
+# Modules that must never be reachable from the browser half, and the
 # server ENTRY POINT this app's one add-on manifest names in `provides[].server`.
 # The carrier's credentials live behind those three files; a client bundle that
 # could reach one is a client bundle that could hold an API key.
@@ -352,7 +352,8 @@ cmd_status() {
       done < <(cd "$dest" && find . -type f | sed 's|^\./||' | sort)
 
       if [ "$key" != host ]; then
-        # D15: the server half must not be reachable from a browser bundle.
+        # Secrets stay server-side: the server half must not be reachable from a
+        # browser bundle.
         for f in "${FORBIDDEN[@]}"; do
           [ -e "$dest/$f" ] && { state="SECRET-LEAK $f"; drift=1; }
         done

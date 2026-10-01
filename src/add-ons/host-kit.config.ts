@@ -65,12 +65,12 @@ export const hostKit: HostKitConfig<HostedSlotId> = {
    *     cannot reach because it is a question about a rendered text node.
    *
    * WHAT WOULD CHANGE IT is one `devDependencies` line — `jsdom` — plus the
-   * fixtures the four guards take. That is not forbidden by 25 D11: the rule is
-   * about what reaches a browser, and both hosts that already carry this seam
-   * have had `jsdom` since wave 4b with no change to what they ship. It is not
-   * done here because a first React test tree in an app with none is a change
-   * to how this repo is tested, and that belongs in its own diff rather than
-   * riding in on a carrier.
+   * fixtures the four guards take. That is not forbidden by the
+   * no-new-dependency rule: it is about what reaches a browser, and both hosts
+   * that already carry this seam have long had `jsdom` with no change to what
+   * they ship. It is not done here because a first React test tree in an app
+   * with none is a change to how this repo is tested, and that belongs in its
+   * own diff rather than riding in on a carrier.
    *
    * The kit gives this no exemption field, deliberately, and the moment `jsdom`
    * appears in `package.json` the tier guard fails until this line says `2`.
@@ -99,8 +99,8 @@ export const hostKit: HostKitConfig<HostedSlotId> = {
    * not-affiliated line in the same component, because there is exactly one
    * such surface and it was built after the rule. An entry here would mean a
    * screen that names a company and says nothing about the relationship, which
-   * is the thing 24 D12 exists to stop — so the list staying empty is the
-   * result, not the absence of a check.
+   * is the thing the affiliation rule exists to stop — so the list staying
+   * empty is the result, not the absence of a check.
    */
   affiliationExempt: {},
 };

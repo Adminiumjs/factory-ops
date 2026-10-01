@@ -13,9 +13,9 @@
  * the fiction rather than mutable app state.
  *
  * THE CLOCK DOES NOT MOVE. `now` is the pinned Tuesday 10:15 and there is no
- * action that changes it: on this app the Floor advances the board, not the hour
- * (21 D6a). Every elapsed chip, invoice age and required-by date resolves
- * against that one value, and nothing in the app reads a real clock.
+ * action that changes it: on this app the Floor advances the board, not the
+ * hour. Every elapsed chip, invoice age and required-by date resolves against
+ * that one value, and nothing in the app reads a real clock.
  */
 
 import { create } from "zustand";
@@ -157,7 +157,7 @@ interface State {
   /* --- the pinned clock --- */
   now: Now;
 
-  /* --- add-ons (24 §5.9) --- */
+  /* --- add-ons --- */
   /**
    * Everything registered, and the two sets that decide what is drawn.
    *
@@ -820,7 +820,7 @@ export const useStore = create<State>((set, get) => ({
   /*
    * Nothing is signed. The flag flips in memory and the panel stops offering
    * the button — no signature is captured, and none is filed anywhere, so the
-   * toast says so and names nobody (24 D11). Attributing the signature to the
+   * toast says so and names nobody. Attributing the signature to the
    * floor lead was the strongest untrue claim in this app.
    */
   signHandover: () => {
@@ -835,7 +835,7 @@ export const useStore = create<State>((set, get) => ({
    * Replace the registry with what was registered.
    *
    * Nothing is switched on. A works that has just installed the desk has
-   * nothing connected, every screen is finished (24 D6), and the reviewer turns
+   * nothing connected, every screen is finished, and the reviewer turns
    * a carrier on from the Works screen and watches the Dispatch card grow one.
    * A default of "everything on" would make the app's own claim untestable by
    * the only person in a position to test it.
@@ -866,7 +866,7 @@ export const useStore = create<State>((set, get) => ({
    *
    * The one add-on here declares `connect: "api-key"`, and a real connection
    * would collect that key. It is not collected because it must never reach
-   * this store, this bundle or this browser (24 D15): the key belongs to the
+   * this store, this bundle or this browser: the key belongs to the
    * add-on's server half, which is where its only outbound request happens.
    * Nothing in this repo has a field to hold one, which is why there is nothing
    * to clear on the way out.
@@ -883,7 +883,7 @@ export const useStore = create<State>((set, get) => ({
     })),
 
   /**
-   * Disconnect: the surfaces go, the credentials go, THE RECORDS STAY (24 D16).
+   * Disconnect: the surfaces go, the credentials go, THE RECORDS STAY.
    *
    * The staying is not a promise this action keeps by being careful — it is one
    * it cannot break, because nothing below touches `items`, `movements`, `sos`

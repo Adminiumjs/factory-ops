@@ -9,7 +9,7 @@
  * own subtitle, rules the available column above its total, and colours it
  * amber at the reorder point and red at zero.
  *
- * THE BOOKS is a VIEW, not an accounting product (21 D15). It rolls up revenue,
+ * THE BOOKS is a VIEW, not an accounting product. It rolls up revenue,
  * cost of goods from the run costings, margin, receivables and payables from
  * data the app already holds, and it carries one honest line saying exactly
  * that. No double entry, no journals, no period close — and nothing added here
@@ -1099,8 +1099,8 @@ export function Dispatch() {
 
                   SILENT WHEN NOTHING FILLS IT — no `fallback` prop, matching
                   `SLOT_EMPTY_BEHAVIOUR`. A works with no carrier connected
-                  books its own transport and this card is already finished
-                  (24 D6); a dashed "no carrier" box under the Ship button
+                  books its own transport and this card is already finished;
+                  a dashed "no carrier" box under the Ship button
                   would be the app describing a hole it does not have.
 
                   NOTHING FROM IN HERE GOES THROUGH `toast()`. This app's toast
@@ -1511,8 +1511,8 @@ export function Recipes() {
 
             SILENT WHEN NOTHING FILLS IT — no `fallback` prop, matching
             `SLOT_EMPTY_BEHAVIOUR`. This app draws no heading above it, so with
-            nothing connected the card simply ends where it always ended (24
-            D6). A dashed box under the rate panel would be the works
+            nothing connected the card simply ends where it always ended.
+            A dashed box under the rate panel would be the works
             announcing a hole in a screen that was finished before any add-on
             existed.
 
@@ -1713,8 +1713,9 @@ export function Books() {
       </div>
 
       {/*
-       * 21 D15, verbatim and non-negotiable. "The books" is a view over data the
-       * app already holds, and it says so where a reader will actually see it.
+       * The scope line, verbatim and non-negotiable. "The books" is a view over
+       * data the app already holds, and it says so where a reader will actually
+       * see it.
        */}
       <p className="kw-honest">{t("books.honest")}</p>
     </section>

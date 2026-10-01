@@ -10,7 +10,7 @@
  * add-on that renders its own form needs somewhere to render it. So the surface
  * is new, and the first thing on it is deliberately NOT an add-on.
  *
- * ── IT IS FINISHED WITH NOTHING CONNECTED (24 D6) ──────────────────────────
+ * ── IT IS FINISHED WITH NOTHING CONNECTED ──────────────────────────────────
  *
  * The works' own address is the top half of this screen and it is a host fact:
  * it is on every label and every delivery note whether or not a carrier exists,
@@ -21,7 +21,7 @@
  * The bottom half then lists whatever registered — and with an empty registry
  * it says, in words, that nothing is connected and that orders leave the way
  * they always have. An empty state that reads as a finished sentence rather
- * than as a gap is the whole of D6 on one screen.
+ * than as a gap is the whole of that claim on one screen.
  *
  * ── AND IT NAMES NO COMPANY ────────────────────────────────────────────────
  *
@@ -30,7 +30,7 @@
  * permission keys, and the two sentences it supplies about disconnecting.
  * Swapping the carrier for another one changes one import in
  * `add-ons/registry.ts` and nothing here. `Affiliation` is what pairs the name
- * with the line saying who is and is not involved (24 D12, AC6), and it is
+ * with the line saying who is and is not involved, and it is
  * rendered by the same component that prints the name rather than a section
  * further down — a disclaimer a reader has to scroll to is a disclaimer that
  * was not on the surface where they met the name.
@@ -81,7 +81,7 @@ function Permissions({ addOn }: { addOn: AddOn }) {
 }
 
 /**
- * What a disconnect takes away and what it leaves behind (24 D16).
+ * What a disconnect takes away and what it leaves behind.
  *
  * BOTH SENTENCES ARE THE ADD-ON'S, and both are shown BEFORE the button rather
  * than in a dialog after it. A works reading "collections already booked keep

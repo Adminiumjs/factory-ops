@@ -28,7 +28,7 @@
  *                                makes tableware to order for restaurants.
  *
  * That is the exact mirror of the storefront, which hosts those three and
- * cannot host this one. A slot id names a SURFACE and never an app (24 D21), so
+ * cannot host this one. A slot id names a SURFACE and never an app, so
  * two hosts of one add-on legitimately mount disjoint halves of it.
  *
  * The rest are not about this app's shape:
@@ -110,7 +110,7 @@ export function isHosted(slot: SlotId): slot is HostedSlotId {
  * pallet to whoever is collecting it. A works with no carrier connected is not
  * missing anything; it is a works that books its own transport, which is how
  * most of them run. A dashed "no carriers connected" panel under the Ship
- * button would be the app describing a hole it does not have (24 D6).
+ * button would be the app describing a hole it does not have.
  *
  * `settings.add-on.panel` SPEAKS, and for the opposite reason: the surface that
  * mounts it puts the panel under a heading of its own, and a heading with a gap
@@ -125,7 +125,7 @@ export function isHosted(slot: SlotId): slot is HostedSlotId {
  * it brings its own panel, and one that does not leaves a card that was already
  * complete. A dashed "nothing here" box under the rate panel would be this app
  * announcing a hole in a screen it finished before any add-on existed, which is
- * exactly what 24 D6 is about.
+ * exactly what the honest empty state rules out.
  *
  * THE TEST FOR `speaks` IS WHETHER THE HOST DREW SOMETHING FIRST. That is the
  * whole rule, and it is why the settings panel is the odd one out: it is the

@@ -42,7 +42,7 @@ import {
 } from "../testing/kit/index.ts";
 
 /**
- * Claims about a delivery this app has already answered for (34 D19).
+ * Claims about a delivery this app has already answered for.
  *
  * Filled in below, per key, with the argument being made — see
  * `testing/kit/delivery-claims.ts` for the three that are legitimate.
@@ -70,7 +70,7 @@ factsGuard(hostKit);
 vendoredGuard(hostKit);
 stylesGuard(hostKit);
 /*
- * 34 D19. This app labels no simulation — it has no demo-marker convention at
+ * This app labels no simulation — it has no demo-marker convention at
  * all — so every claim it makes has to be answered in `claimsDeclared`, by
  * name, with the argument being made.
  */
@@ -118,10 +118,11 @@ describe("factory-ops · the add-ons it registers", () => {
 
   it("starts with nothing switched on, so the desk is finished without it", () => {
     /*
-     * 24 D6, asserted rather than described. `registerAddOns` sets no `enabled`
-     * key, so the first render after a boot draws every slot's empty state —
-     * which is what makes "the app looks finished with the add-on off" a thing
-     * a reviewer can check by opening it rather than a claim in a header.
+     * The honest empty state, asserted rather than described. `registerAddOns`
+     * sets no `enabled` key, so the first render after a boot draws every
+     * slot's empty state — which is what makes "the app looks finished with the
+     * add-on off" a thing a reviewer can check by opening it rather than a
+     * claim in a header.
      */
     for (const slot of HOSTED_SLOTS) {
       expect(registry.fillsFor(slot, new Set()), slot).toEqual([]);
@@ -139,12 +140,13 @@ describe("factory-ops · the add-ons it registers", () => {
 
   it("holds no secret, because there is nowhere in this app to put one", () => {
     /*
-     * 24 D15 from the host's side. An add-on's `settings` list is what its
-     * panel may render IN A BROWSER; its credentials are declared secret in its
-     * manifest and live in its server half. This asserts the default document
-     * this app boots with carries neither of the carrier's two — not because
-     * they were carefully removed, but because nothing here has a field for
-     * one, and this case is what would notice if that changed.
+     * Secrets never reach the browser, from the host's side. An add-on's
+     * `settings` list is what its panel may render IN A BROWSER; its
+     * credentials are declared secret in its manifest and live in its server
+     * half. This asserts the default document this app boots with carries
+     * neither of the carrier's two — not because they were carefully removed,
+     * but because nothing here has a field for one, and this case is what would
+     * notice if that changed.
      */
     const flat = JSON.stringify(DEFAULT_ADD_ON_SETTINGS);
     expect(flat).not.toContain("api_key");
@@ -155,8 +157,8 @@ describe("factory-ops · the add-ons it registers", () => {
     /*
      * The seam is only worth having if something crosses it. The carrier fills
      * `order.dispatch.actions`; it also fills three slots this app does not
-     * mount, and those fills simply never render — which is D21 working rather
-     * than a mismatch.
+     * mount, and those fills simply never render — which is the app-neutral
+     * rule working rather than a mismatch.
      */
     const all = new Set(registry.all.map((a) => a.key));
     expect(registry.fillsFor("order.dispatch.actions", all).map((f) => f.addOn)).toContain(

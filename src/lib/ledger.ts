@@ -5,7 +5,7 @@
  * line maths, the payments ledger with a running balance and aging buckets, and
  * the period roll-up behind "The books".
  *
- * THE SCOPE BOUNDARY LIVES HERE (21 D15). This module computes a VIEW over data
+ * THE SCOPE BOUNDARY LIVES HERE. This module computes a VIEW over data
  * the app already holds: revenue, cost of goods from the run costings, gross
  * margin, receivables and payables. There is no double entry anywhere below, no
  * chart of accounts, no journal, no period close and no tax return. The one line
@@ -331,7 +331,7 @@ export interface Books {
  * and cost of goods is those same lines at the unit cost the run costings
  * produce. Nothing here is an accrual, an accrual reversal or a journal: it is
  * arithmetic over the order book and the stock ledger, which is exactly what
- * 21 D15 says this screen is allowed to be.
+ * this screen is allowed to be.
  */
 export function books(
   items: readonly Item[],

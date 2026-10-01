@@ -6,7 +6,7 @@
  * copy lives in `screens.ts`; the seed's own prose lives in `data.ts`.
  *
  * VOCABULARY. Kilnworks bans a short list of words in every language, not only
- * English (21 D10a). The one that will catch a translator out first is the
+ * English. The one that will catch a translator out first is the
  * English word for a works — never use it; this is "the works", "the floor" or
  * "the site". The rest: no "production p·l·a·n" (say the schedule or the run
  * queue), no "p·l·a·n·n·e·r" (scheduler), no "p·r·i·c·i·n·g" (price list or

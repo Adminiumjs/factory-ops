@@ -8,8 +8,8 @@
  *
  * ── WHY BY HAND ────────────────────────────────────────────────────────────
  *
- * 25 D11 again: no runtime dependency the host has not got, and the host has
- * React. `packages/shipping-dhl/src/label.ts` writes a complete PDF 1.4 in
+ * The same rule again: no runtime dependency the host has not got, and the host
+ * has React. `packages/shipping-dhl/src/label.ts` writes a complete PDF 1.4 in
  * about twenty-five lines with nothing at all, and this is the same file with
  * more pages and rectangles instead of only text. Six object kinds, offsets
  * collected while they are concatenated so the cross-reference table is exact,

@@ -26,7 +26,7 @@
 --    works measures clay in kilos to the gram and plates in whole units, and one
 --    column has to hold both.
 --
--- 3. THE MONEY SCREEN IS A VIEW, NOT A LEDGER (21 D15). There is no journal
+-- 3. THE MONEY SCREEN IS A VIEW, NOT A LEDGER. There is no journal
 --    table below, no chart of accounts, no posting period and no closing entry,
 --    and none should be added. Revenue, cost of goods, margin, receivables and
 --    payables are all derivable from sales_orders, invoices, payments,
